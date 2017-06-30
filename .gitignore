@@ -1,2 +1,2 @@
-./lolock_api/bin
-./lolock_api/node_modules
+bin/
+node_modules/
