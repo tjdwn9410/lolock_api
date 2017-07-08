@@ -4,6 +4,7 @@ var request = require('request');
 var xml2js = require('xml2js');
 var parser = new xml2js.Parser();
 var mysql = require('mysql');
+var mongoose = require('mongoose');
 var connection = mysql.createConnection({
   host : 'localhost',
   user : 'me',
@@ -47,6 +48,33 @@ router.get('/userids/:user_id/passwords/:passwd', function(req, res, next){
   })
 });
 
+/* GET housemate list and response to app */
+router.get('/homemateslist', function(req, res, next){
+  console.log(JSON.stringify(req.headers.ltid)); // "Headers 의 LTID 키를 가져옴"
+
+  // TODO : req.headers.ltid와 같은 아이디를 가지는 사용자를 db에서 찾아서 문자열로 가져옴
+  var homematelist = {
+    "mates": [
+		{
+			"mateImageUrl": "유저이미지url",
+			"mateName": "동거인 네임",
+			"mateOutingFlag": "동거인 나갔는지 들어왔는지 알려주는지 여부",
+			"mateDoorOpenTime": "동거인 마지막으로 문 연 시간."
+		},
+		{
+			"mateImageUrl": "유저이미지url",
+			"mateName": "동거인 네임",
+			"mateOutingFlag": "동거인 나갔는지 들어왔는지 알려주는지 여부",
+			"mateDoorOpenTime": "동거인 마지막으로 문 연 시간."
+		}
+	],
+	"mateNumber": 2
+  }
+  // TODO : 요청한 앱에 동거인 리스트를 body로 실어서 보냄
+
+  res.send(homematelist);
+})
+
 /* POST User Info, LoRa ID, bluetooth address and GPS / 기기등록 */
 // TODO : npm body-parser install, which data format will be used? and save mysql
 router.post('/usernames/:username/loraid/bluetoothid/gps', function(req, res, next){
@@ -65,7 +93,7 @@ router.put('/remotetest', function(req, res, next){
     'Content-Type' : 'application/xml'
   }
 
-  /*
+/*
   body(xml형식) 양식
   var body = '<?xml version="1.0" encoding="utf-8"?>' +
            '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">'+
