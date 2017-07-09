@@ -46,10 +46,11 @@ router.get('/userids/:user_id/passwords/:passwd', function(req, res, next){
         //[ 'bjBwOXpCTUdxUFZ3UEZFR3lZTUZOeDlzdVl1OWpRdUdxTVg0Zmo5UHBIdFJOa2FObUJOTVNsamt1K00yYWRPTA==' ]
         console.log(result.ThingPlug.user[0].uKey);
       });
+    }
       // 이대로 보내면 웹브라우져에선 text밖에 보이지 않음(구분되지 않고 문자만 나옴)
       res.send(body);
    });
-}
+})
 
 
 /* GET housemate list and response to app */
