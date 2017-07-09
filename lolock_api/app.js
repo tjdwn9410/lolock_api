@@ -22,6 +22,7 @@ app.use(bodyParser.json());
 // false -> true로 값을 바꿈
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+//app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', index);
