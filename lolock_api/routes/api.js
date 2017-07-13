@@ -92,8 +92,8 @@ router.put('/remotetest', function(req, res, next){
   // X-M2M-RI , X-M2M-Origin, uKey, Content-Type는 사용자마다 달라야한다. / 지금은 테스트 중이라 직접 입력함
   var headers = {
     'Accept' : 'application/xml',
-    'X-M2M-RI' : '00000174d02544fffef0103d_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
-    'X-M2M-Origin' : '00000174d02544fffef0103d',
+    'X-M2M-RI' : '00000174d02544fffef0100d_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
+    'X-M2M-Origin' : '00000174d02544fffef0100d',
     'uKey' : 'STRqQWE5a28zTlJ0QWQ0d0JyZVlBL1lWTkxCOFlTYm4raE5uSXJKTC95eG9NeUxoS3d4ejY2RWVIYStlQkhNSA==',
     'Content-Type' : 'application/xml'
   }
@@ -112,19 +112,25 @@ router.put('/remotetest', function(req, res, next){
   }
 
   request(options, function(error, response, body){
-    console.log(2);
     if(!error && response.statusCode == 200){
-      console.log(3);
       parser.parseString(body, function(err, result) {
         console.log(JSON.stringify(result));
         //console.log(result.ThingPlug.result_code);
         //console.log(result.ThingPlug.user[0].uKey);
       });
-      console.log(4);
       res.send(body);
     }
   })
 })
+
+/* POST loRa subscribe한 데이터 전달받는다.*/
+router.post('/loradata', function(req, res, next){
+  parser.parseString(req.body, function(err, result) {
+    console.log(JSON.stringify(result));
+    //console.log(JSON.stringify(result.nev.rep));
+    
+  });
+});
 
 
 router.post('/register', function(req, res, next) {
