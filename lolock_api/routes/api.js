@@ -125,7 +125,7 @@ router.put('/remotetest', function(req, res, next){
 
 /* POST loRa subscribe한 데이터 전달받는다.*/
 router.post('/loradata', function(req, res, next){
-  parser.parseString(JSON.stringify(req.body), function(err, result) {
+  parser.parseString(req.body, function(err, result) {
     console.log(JSON.stringify(result));
     console.log(result);
     //console.log(JSON.stringify(result.nev.rep));
