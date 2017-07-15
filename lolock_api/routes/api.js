@@ -128,12 +128,10 @@ router.post('/loradata', function(req, res, next){
   var notificationMessage = req.body['m2m:cin'];
   var content = notificationMessage.con[0];
   var time = notificationMessage.lt[0];
-  var LTID = notificationMessage.cr[0];
-  var LTID2 = req.body['m2m:sgn'].sur[0];
-
+  var LTID = notificationMessage.sr[0];
 
   console.log(content, time);
-  console.log(LTID, LTID2);
+  console.log(LTID);
 });
 
 
