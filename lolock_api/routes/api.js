@@ -205,7 +205,7 @@ router.post('/register', function(req, res, next) {
         });
 });
 
-router.get('/weatherdata/:long/long/:lat/lat', function(req, res, next) {
+router.get('/weatherdata/long/:long/lat/:lat', function(req, res, next) {
   sendWeatherInfoToApp("123", req.params.long, req.params.lat);
 })
                                                 // 경도       위도
