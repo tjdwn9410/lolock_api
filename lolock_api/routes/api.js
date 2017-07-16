@@ -3,17 +3,9 @@ var router = express.Router();
 var request = require('request');
 var xml2js = require('xml2js');
 var parser = new xml2js.Parser();
-var mysql = require('mysql');
-// var mongoose = require('mongoose');
-// var connection = mysql.createConnection({
-//   host : 'localhost',
-//   user : 'me',
-//   password : '',
-//   database : 'sktLolock'
-// });
-// =======
 var mysql = require('mysql-promise')();
 var mysqlConfig = require('../config/db_config.json');
+var FCM = require('fcm-push');
 mysql.configure(mysqlConfig);
 
 
@@ -71,15 +63,30 @@ router.get('/homemateslist/:LTID', function(req, res, next) {
     var LoLockId = req.params.LTID;
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [LoLockId])
         .spread(function(rows) {
-          if (rows[0] == null) {
-              res.json({
-                  code: 'DEVICE_ID_ERR',
-                  message: '등록되지 않은 기기'
-              });
-          } else {
-              getDeviceIdFromDB = rows[0].id;
-              return mysql.query("SELECT * FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)",[getDeviceIdFromDB]);
-          }
+            if (rows[0] == null) {
+                res.json({
+                    code: 'DEVICE_ID_ERR',
+                    message: '등록되지 않은 기기'
+                });
+            } else {
+                getDeviceIdFromDB = rows[0].id;
+                return mysql.query("SELECT * FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", [getDeviceIdFromDB]);
+            }
+        })
+        .spread(function(rows) {
+            var jsonArray = new Array();
+            rows.foreach(function(value) {
+              var jsonObj;
+              jsonObj=
+              {
+              		"mateImageUrl": value.profile_url,
+              		"mateName": value.name,
+              		"mateOutingFlag": value.flag,
+              		"mateDoorOpenTime": value.time
+              };
+              jsonArray.push(jsonObj);
+            });
+            res.send(jsonArray);
         });
     // // TODO : req.headers.ltid와 같은 아이디를 가지는 사용자를 db에서 찾아서 문자열로 가져옴
     // var homematelist = {
@@ -112,84 +119,85 @@ router.post('/usernames/:username/loraid/bluetoothid/gps', function(req, res, ne
 
 /* PUT Lolock to open / 로락을 원격으로 열 수 있도록 데이터 전송 */
 
-router.put('/remotetest', function(req, res, next){
-  console.log(1);
-  // X-M2M-RI , X-M2M-Origin, uKey, Content-Type는 사용자마다 달라야한다. / 지금은 테스트 중이라 직접 입력함
-  var headers = {
-    'Accept' : 'application/xml',
-    'X-M2M-RI' : '00000174d02544fffef0100d_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
-    'X-M2M-Origin' : '00000174d02544fffef0100d',
-    'uKey' : 'STRqQWE5a28zTlJ0QWQ0d0JyZVlBL1lWTkxCOFlTYm4raE5uSXJKTC95eG9NeUxoS3d4ejY2RWVIYStlQkhNSA==',
-    'Content-Type' : 'application/xml'
-  }
+router.put('/remotetest', function(req, res, next) {
+    console.log(1);
+    // X-M2M-RI , X-M2M-Origin, uKey, Content-Type는 사용자마다 달라야한다. / 지금은 테스트 중이라 직접 입력함
+    var headers = {
+        'Accept': 'application/xml',
+        'X-M2M-RI': '00000174d02544fffef0100d_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
+        'X-M2M-Origin': '00000174d02544fffef0100d',
+        'uKey': 'STRqQWE5a28zTlJ0QWQ0d0JyZVlBL1lWTkxCOFlTYm4raE5uSXJKTC95eG9NeUxoS3d4ejY2RWVIYStlQkhNSA==',
+        'Content-Type': 'application/xml'
+    }
 
-/*
-  body(xml형식) 양식
-  var body = '<?xml version="1.0" encoding="utf-8"?>' +
-           '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">'+
-            '<soap12:Body>......</soap12:Body></soap12:Envelope>';
-  */
-  var options = {  // 0240771000000174 : AppEUI 와 LTID 는 사용자마다 달라야한다. HOW? / 지금은 테스트라서 직접 입력헀다
-    url : 'https://thingplugpf.sktiot.com:9443/0240771000000174/v1_0/mgmtCmd-00000174d02544fffef0100d_extDevMgmt',
-    method : 'PUT',
-    headers : headers,
-    body : "<?xml version=\"1.0\" encoding=\"UTF-8\"?><m2m:mgc xmlns:m2m=\"http://www.onem2m.org/xml/protocols\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><exe>true</exe><exra>010203</exra></m2m:mgc>"
-  }
-
-  request(options, function(error, response, body){
-    if(!error && response.statusCode == 200){
-      parser.parseString(body, function(err, result) {
-        console.log(JSON.stringify(result));
-        //console.log(result.ThingPlug.result_code);
-        //console.log(result.ThingPlug.user[0].uKey);
-      });
-      res.send(body);
+    /*
+      body(xml형식) 양식
+      var body = '<?xml version="1.0" encoding="utf-8"?>' +
+               '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">'+
+                '<soap12:Body>......</soap12:Body></soap12:Envelope>';
+      */
+    var options = { // 0240771000000174 : AppEUI 와 LTID 는 사용자마다 달라야한다. HOW? / 지금은 테스트라서 직접 입력헀다
+        url: 'https://thingplugpf.sktiot.com:9443/0240771000000174/v1_0/mgmtCmd-00000174d02544fffef0100d_extDevMgmt',
+        method: 'PUT',
+        headers: headers,
+        body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><m2m:mgc xmlns:m2m=\"http://www.onem2m.org/xml/protocols\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><exe>true</exe><exra>010203</exra></m2m:mgc>"
     }
 
     request(options, function(error, response, body) {
-        console.log(2);
         if (!error && response.statusCode == 200) {
-            console.log(3);
             parser.parseString(body, function(err, result) {
                 console.log(JSON.stringify(result));
                 //console.log(result.ThingPlug.result_code);
                 //console.log(result.ThingPlug.user[0].uKey);
             });
-            console.log(4);
             res.send(body);
         }
-    })
-})
 
+        request(options, function(error, response, body) {
+            console.log(2);
+            if (!error && response.statusCode == 200) {
+                console.log(3);
+                parser.parseString(body, function(err, result) {
+                    console.log(JSON.stringify(result));
+                    //console.log(result.ThingPlug.result_code);
+                    //console.log(result.ThingPlug.user[0].uKey);
+                });
+                console.log(4);
+                res.send(body);
+            }
+        });
+    });
+});
 /* POST loRa subscribe한 데이터 전달받는다.*/
-router.post('/loradata', function(req, res, next){
-  var notificationMessage = req.body['m2m:cin'];
-  var content = notificationMessage.con[0];
-  var time = notificationMessage.lt[0];
-  var uri = notificationMessage.sr[0].split('/');
-  var LTID = uri[3].substring(10);
+router.post('/loradata', function(req, res, next) {
+    var notificationMessage = req.body['m2m:cin'];
+    var content = notificationMessage.con[0];
+    var time = notificationMessage.lt[0];
+    var uri = notificationMessage.sr[0].split('/');
+    var LTID = uri[3].substring(10);
 
-  console.log(req.body);
-  console.log(content, time);
-  console.log(LTID);
+    console.log(req.body);
+    console.log(content, time);
+    console.log(LTID);
 
-  // TODO : if content가 불법침입이라면..
+    // TODO : if content가 불법침입이라면..
 
-  // TODO : else if content가 등록된 사용자의 출입(+ 자동 문열림 기능)이라면
-  // 로그도 DB에 남겨야 함
-  mysql.query("SELECT id FROM lolock_register WHERE device_id=?", [LTID])
-      .spread(function(rows){
-        var phoneList = new Array();
-        for (var i in rows){
-          phoneList.push(mysql.query("SELECT phone_id FROM lolock_users WHERE id=?", rows[i]));
-        }
-        console.log(phoneList);
-        // phone_id를 통해 앱에 푸시 메세지 날리기
-      })
+    // TODO : else if content가 등록된 사용자의 출입(+ 자동 문열림 기능)이라면
+    // 로그도 DB에 남겨야 함
+    mysql.query("SELECT id FROM lolock_register WHERE device_id=?", [LTID])
+        .spread(function(rows) {
+            var phoneList = new Array();
+            for (var i in rows) {
+                phoneList.push(mysql.query("SELECT phone_id FROM lolock_users WHERE id=?", rows[i]));
+            }
+            console.log(phoneList);
+            // phone_id를 통해 앱에 푸시 메세지 날리기
+            // fcm message를 설정해서 send
+        })
 
-  // TODO : else if content가 일회용 문열림이라면
+    // TODO : else if content가 일회용 문열림이라면
 
-  // TODO : else 에러?
+    // TODO : else 에러?
 
 
 });
@@ -241,6 +249,30 @@ router.post('/register', function(req, res, next) {
                 message: '데이터베이스 에러'
             });
         });
+    // TODO : LoLock Device에 새로운 사용자 정보 전송
+});
+
+// fcm 예제 코드
+var serverKey = ''; //firebase serverKey
+var fcm = new FCM(serverKey);
+var message = {
+    to: 'registration_token_or_topics', // device token
+    collapse_key: 'your_collapse_key',
+    data: {
+        your_custom_data_key: 'your_custom_data_value'
+    },
+    notification: {
+        title: 'Title of your push notification',
+        body: 'Body of your push notification'
+    }
+};
+//callback style
+fcm.send(message, function(err, response) {
+    if (err) {
+        console.log("Something has gone wrong!");
+    } else {
+        console.log("Successfully sent with response: ", response);
+    }
 });
 
 module.exports = router;
