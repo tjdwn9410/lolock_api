@@ -3,15 +3,8 @@ var router = express.Router();
 var request = require('request');
 var xml2js = require('xml2js');
 var parser = new xml2js.Parser();
-var mysql = require('mysql');
-// var mongoose = require('mongoose');
-// var connection = mysql.createConnection({
-//   host : 'localhost',
-//   user : 'me',
-//   password : '',
-//   database : 'sktLolock'
-// });
-// =======
+var exec = require('child_process').exec,
+    child;
 var mysql = require('mysql-promise')();
 var mysqlConfig = require('../config/db_config.json');
 mysql.configure(mysqlConfig);
@@ -25,6 +18,7 @@ mysql.configure(mysqlConfig);
       그리고 DB table인 lolock_users와 lolock_register에 등록한다.
    4. TODO : 문이 열리거나 특정 상황에 lolock이 Thingplug에 데이터를 전송하면 POST방식으로 /loradata로 데이터가 전송됨
    5. TODO : 기기가 꺼졌다가 다시 켜졌을 시에 lolock에 필요한 동거인 데이터를 전송
+   6. TODO : 동거인이 추가될 때 마다 lolock에 블루투스 address?를 전송해야함(첫 기기등록시에도)
 */
 
 
@@ -210,4 +204,28 @@ router.post('/register', function(req, res, next) {
             });
         });
 });
+
+router.get('/weatherdata/:long/long/:lat/lat', function(req, res, next) {
+  sendWeatherInfoToApp("123", req.params.long, req.params.lat);
+})
+                                                // 경도       위도
+var sendWeatherInfoToApp = function(androidToken, gps_long, gps_lat){
+  child = exec("./a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr){
+    console.log('stdout : ' + stdout);
+    console.log('stderr : ' + stderr);
+    if(error !== null){
+      console.log('exec error: ' + error);
+    }
+    var nx = stdout.split(' = ')[1].split(',')[0];    // '62, Y'
+    var ny = stdout.split(' = ')[2];
+
+    console.log(nx);
+    console.log(ny);
+    console.log(123);
+
+    res.send(nx + " " + ny + " " + androidToken);
+  })
+}
+
+
 module.exports = router;
