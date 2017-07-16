@@ -222,8 +222,6 @@ var sendWeatherInfoToApp = function(androidToken, gps_long, gps_lat){
     console.log(nx);
     console.log(ny);
     console.log(123);
-
-    res.send(nx + " " + ny + " " + androidToken);
   })
 }
 
