@@ -253,26 +253,26 @@ router.post('/register', function(req, res, next) {
 });
 
 // fcm 예제 코드
-var serverKey = ''; //firebase serverKey
-var fcm = new FCM(serverKey);
-var message = {
-    to: 'registration_token_or_topics', // device token
-    collapse_key: 'your_collapse_key',
-    data: {
-        your_custom_data_key: 'your_custom_data_value'
-    },
-    notification: {
-        title: 'Title of your push notification',
-        body: 'Body of your push notification'
-    }
-};
-//callback style
-fcm.send(message, function(err, response) {
-    if (err) {
-        console.log("Something has gone wrong!");
-    } else {
-        console.log("Successfully sent with response: ", response);
-    }
-});
+// var serverKey = ''; //firebase serverKey
+// var fcm = new FCM(serverKey);
+// var message = {
+//     to: 'registration_token_or_topics', // device token
+//     collapse_key: 'your_collapse_key',
+//     data: {
+//         your_custom_data_key: 'your_custom_data_value'
+//     },
+//     notification: {
+//         title: 'Title of your push notification',
+//         body: 'Body of your push notification'
+//     }
+// };
+// //callback style
+// fcm.send(message, function(err, response) {
+//     if (err) {
+//         console.log("Something has gone wrong!");
+//     } else {
+//         console.log("Successfully sent with response: ", response);
+//     }
+// });
 
 module.exports = router;
