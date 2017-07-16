@@ -206,22 +206,37 @@ router.post('/register', function(req, res, next) {
 });
 
 router.get('/weatherdata/long/:long/lat/:lat', function(req, res, next) {
-  sendWeatherInfoToApp("123", req.params.long, req.params.lat);
+  sendWeatherInfoToApp("123", req.params.long, req.params.lat, 20170716, 2000);
 })
-                                                // 경도       위도
-var sendWeatherInfoToApp = function(androidToken, gps_long, gps_lat){
+                                                // 경도       위도    날짜 시간
+var sendWeatherInfoToApp = function(androidToken, gps_long, gps_lat, date, time){
   child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr){
-    console.log('stdout : ' + stdout);
-    console.log('stderr : ' + stderr);
     if(error !== null){
       console.log('exec error: ' + error);
     }
     var nx = stdout.split(' = ')[1].split(',')[0];    // '62, Y'
-    var ny = stdout.split(' = ')[2];
-
+    var ny = stdout.split(' = ')[2].split('\n')[0];
     console.log(nx);
     console.log(ny);
-    console.log(123);
+
+    var POSTuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
+    POSTuri += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
+    POSTuri += '&base_date='+date;
+    POSTuri += '&base_time='+time;
+    POSTuri += '&nx='+nx;
+    POSTuri += '&ny='+ny;
+    POSTuri += '&numOfRows=10';
+    POSTuri += '&pageNo=1';
+    POSTuri += '&_type=json';
+    var options = {
+      url : POSTuri,
+      method : 'GET',
+    }
+    request(options, function(error, response, body){
+      if(!error && response.statusCode == 200){
+        console.log(body);
+      }
+    });
   })
 }
 
