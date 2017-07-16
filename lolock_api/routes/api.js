@@ -75,17 +75,25 @@ router.get('/homemateslist/:LTID', function(req, res, next) {
         })
         .spread(function(rows) {
             var jsonArray = new Array();
-            rows.foreach(
-                function(value) {
-                    var jsonObj = {
-                        "mateImageUrl": value.profile_url,
-                        "mateName": value.name,
-                        "mateOutingFlag": value.flag,
-                        "mateDoorOpenTime": value.time
-                    };
-                    jsonArray.push(jsonObj);
-                });
-            res.send(jsonArray);
+            var count = 0;
+            for(var i in rows)
+            {
+                var jsonObj = {
+                    "mateImageUrl": rows[i].profile_url,
+                    "mateName": rows[i].name,
+                    "mateOutingFlag": rows[i].flag,
+                    "mateDoorOpenTime": rows[i].time
+                };
+                jsonArray.push(jsonObj);
+                count++;
+            }
+            var result =
+            {
+              "mates" : jsonArray,
+              "mateNumber" : count
+            }
+            res.json(result);
+            //res.send(rows);
         });
     // // TODO : req.headers.ltid와 같은 아이디를 가지는 사용자를 db에서 찾아서 문자열로 가져옴
     // var homematelist = {
