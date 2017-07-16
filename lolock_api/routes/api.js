@@ -16,10 +16,22 @@ var mysql = require('mysql-promise')();
 var mysqlConfig = require('../config/db_config.json');
 mysql.configure(mysqlConfig);
 
+
+/*
+   전제 조건
+   1. 로락 디바이스를 판매자(우리)가 먼저 DB의 lolock_devices에 등록을 해둔다
+   2. lolock_devices 등록과 동시에 subscribe를 해둔다. subscribe 이름 : AlldataNoti;
+   3. 사용자가 로락 디바이스를 구매한 뒤 앱으로 등록을 하게 되면 앱에서 POST 방식으로 /register로 데이터전송
+      그리고 DB table인 lolock_users와 lolock_register에 등록한다.
+   4. TODO : 문이 열리거나 특정 상황에 lolock이 Thingplug에 데이터를 전송하면 POST방식으로 /loradata로 데이터가 전송됨
+   5. TODO : 기기가 꺼졌다가 다시 켜졌을 시에 lolock에 필요한 동거인 데이터를 전송
+*/
+
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
     console.log("HI");
-    res.send();
+    res.send("HI");
 });
 
 /* GET ukey in xml / uKey를 xml 형식으로 받아서 리턴*/
@@ -80,12 +92,6 @@ router.get('/homemateslist', function(req, res, next){
   res.send(homematelist);
 })
 
-/* POST User Info, LoRa ID, bluetooth address and GPS / 기기등록 */
-// TODO : npm body-parser install, which data format will be used? and save mysql
-router.post('/usernames/:username/loraid/bluetoothid/gps', function(req, res, next){
-
-})
-
 /* PUT Lolock to open / 로락을 원격으로 열 수 있도록 데이터 전송 */
 router.put('/remotetest', function(req, res, next){
   console.log(1);
@@ -131,8 +137,29 @@ router.post('/loradata', function(req, res, next){
   var uri = notificationMessage.sr[0].split('/');
   var LTID = uri[3].substring(10);
 
+  console.log(req.body);
   console.log(content, time);
   console.log(LTID);
+
+  // TODO : if content가 불법침입이라면..
+
+  // TODO : else if content가 등록된 사용자의 출입(+ 자동 문열림 기능)이라면
+  // 로그도 DB에 남겨야 함
+  mysql.query("SELECT id FROM lolock_register WHERE device_id=?", [LTID])
+      .spread(function(rows){
+        var phoneList = new Array();
+        for (var i in rows){
+          phoneList.push(mysql.query("SELECT phone_id FROM lolock_users WHERE id=?", rows[i]));
+        }
+        console.log(phoneList);
+        // phone_id를 통해 앱에 푸시 메세지 날리기
+      })
+
+  // TODO : else if content가 일회용 문열림이라면
+
+  // TODO : else 에러?
+
+
 });
 
 
