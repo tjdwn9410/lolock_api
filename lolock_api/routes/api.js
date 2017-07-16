@@ -75,17 +75,16 @@ router.get('/homemateslist/:LTID', function(req, res, next) {
         })
         .spread(function(rows) {
             var jsonArray = new Array();
-            rows.foreach(function(value) {
-              var jsonObj;
-              jsonObj=
-              {
-              		"mateImageUrl": value.profile_url,
-              		"mateName": value.name,
-              		"mateOutingFlag": value.flag,
-              		"mateDoorOpenTime": value.time
-              };
-              jsonArray.push(jsonObj);
-            });
+            rows.foreach(
+                function(value) {
+                    var jsonObj = {
+                        "mateImageUrl": value.profile_url,
+                        "mateName": value.name,
+                        "mateOutingFlag": value.flag,
+                        "mateDoorOpenTime": value.time
+                    };
+                    jsonArray.push(jsonObj);
+                });
             res.send(jsonArray);
         });
     // // TODO : req.headers.ltid와 같은 아이디를 가지는 사용자를 db에서 찾아서 문자열로 가져옴
@@ -108,7 +107,7 @@ router.get('/homemateslist/:LTID', function(req, res, next) {
     // }
     // // TODO : 요청한 앱에 동거인 리스트를 body로 실어서 보냄
 
-    res.send(homematelist);
+    //res.send(homematelist);
 })
 
 /* POST User Info, LoRa ID, bluetooth address and GPS / 기기등록 */
