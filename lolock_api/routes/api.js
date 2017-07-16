@@ -210,7 +210,7 @@ router.get('/weatherdata/long/:long/lat/:lat', function(req, res, next) {
 })
                                                 // 경도       위도
 var sendWeatherInfoToApp = function(androidToken, gps_long, gps_lat){
-  child = exec("./a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr){
+  child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr){
     console.log('stdout : ' + stdout);
     console.log('stderr : ' + stderr);
     if(error !== null){
