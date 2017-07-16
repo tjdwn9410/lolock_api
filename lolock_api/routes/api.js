@@ -16,10 +16,22 @@ var mysql = require('mysql-promise')();
 var mysqlConfig = require('../config/db_config.json');
 mysql.configure(mysqlConfig);
 
+
+/*
+   전제 조건
+   1. 로락 디바이스를 판매자(우리)가 먼저 DB의 lolock_devices에 등록을 해둔다
+   2. lolock_devices 등록과 동시에 subscribe를 해둔다. subscribe 이름 : AlldataNoti;
+   3. 사용자가 로락 디바이스를 구매한 뒤 앱으로 등록을 하게 되면 앱에서 POST 방식으로 /register로 데이터전송
+      그리고 DB table인 lolock_users와 lolock_register에 등록한다.
+   4. TODO : 문이 열리거나 특정 상황에 lolock이 Thingplug에 데이터를 전송하면 POST방식으로 /loradata로 데이터가 전송됨
+   5. TODO : 기기가 꺼졌다가 다시 켜졌을 시에 lolock에 필요한 동거인 데이터를 전송
+*/
+
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
     console.log("HI");
-    res.send();
+    res.send("HI");
 });
 
 /* GET ukey in xml / uKey를 xml 형식으로 받아서 리턴*/
@@ -99,30 +111,7 @@ router.post('/usernames/:username/loraid/bluetoothid/gps', function(req, res, ne
 })
 
 /* PUT Lolock to open / 로락을 원격으로 열 수 있도록 데이터 전송 */
-<<<<<<< HEAD
-router.put('/remotetest', function(req, res, next) {
-    console.log(1);
-    // X-M2M-RI , X-M2M-Origin, uKey, Content-Type는 사용자마다 달라야한다. / 지금은 테스트 중이라 직접 입력함
-    var headers = {
-        'Accept': 'application/xml',
-        'X-M2M-RI': '00000174d02544fffef0103d_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
-        'X-M2M-Origin': '00000174d02544fffef0103d',
-        'uKey': 'STRqQWE5a28zTlJ0QWQ0d0JyZVlBL1lWTkxCOFlTYm4raE5uSXJKTC95eG9NeUxoS3d4ejY2RWVIYStlQkhNSA==',
-        'Content-Type': 'application/xml'
-    }
 
-    /*
-      body(xml형식) 양식
-      var body = '<?xml version="1.0" encoding="utf-8"?>' +
-               '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">'+
-                '<soap12:Body>......</soap12:Body></soap12:Envelope>';
-      */
-    var options = { // 0240771000000174 : AppEUI 와 LTID 는 사용자마다 달라야한다. HOW? / 지금은 테스트라서 직접 입력헀다
-        url: 'https://thingplugpf.sktiot.com:9443/0240771000000174/v1_0/mgmtCmd-00000174d02544fffef0100d_extDevMgmt',
-        method: 'PUT',
-        headers: headers,
-        body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><m2m:mgc xmlns:m2m=\"http://www.onem2m.org/xml/protocols\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><exe>true</exe><exra>010203</exra></m2m:mgc>"
-=======
 router.put('/remotetest', function(req, res, next){
   console.log(1);
   // X-M2M-RI , X-M2M-Origin, uKey, Content-Type는 사용자마다 달라야한다. / 지금은 테스트 중이라 직접 입력함
@@ -155,7 +144,6 @@ router.put('/remotetest', function(req, res, next){
         //console.log(result.ThingPlug.user[0].uKey);
       });
       res.send(body);
->>>>>>> 3f7baa39f7fcc1b14a2b0bf9550b29a38e1d9073
     }
 
     request(options, function(error, response, body) {
@@ -178,8 +166,32 @@ router.post('/loradata', function(req, res, next){
   var notificationMessage = req.body['m2m:cin'];
   var content = notificationMessage.con[0];
   var time = notificationMessage.lt[0];
+  var uri = notificationMessage.sr[0].split('/');
+  var LTID = uri[3].substring(10);
 
+  console.log(req.body);
   console.log(content, time);
+  console.log(LTID);
+
+  // TODO : if content가 불법침입이라면..
+
+  // TODO : else if content가 등록된 사용자의 출입(+ 자동 문열림 기능)이라면
+  // 로그도 DB에 남겨야 함
+  mysql.query("SELECT id FROM lolock_register WHERE device_id=?", [LTID])
+      .spread(function(rows){
+        var phoneList = new Array();
+        for (var i in rows){
+          phoneList.push(mysql.query("SELECT phone_id FROM lolock_users WHERE id=?", rows[i]));
+        }
+        console.log(phoneList);
+        // phone_id를 통해 앱에 푸시 메세지 날리기
+      })
+
+  // TODO : else if content가 일회용 문열림이라면
+
+  // TODO : else 에러?
+
+
 });
 
 
