@@ -159,12 +159,23 @@ router.post('/loradata', function(req, res, next){
     date = moment().add(-1,'days').format('YYYYMMDD');    // 하루 빼고 2300
   }
 
-  console.log(req.body);
   console.log(content, lastModifiedTime);     // content 2017-07-16T21:35:14+09:00
   console.log(LTID);
   console.log('\n');
 
-  sendWeatherInfoToApp("androidtoken", 127.082108, 37.240982, date, time);
+  mysql.query("SELECT id FROM user_devices WHERE device_id=?","00000174d02544fffef0103d")
+      .spread(function(rows){
+        for(var i in rows){
+          var gps_rows = mysql.query("SELECT gps_lat, gps_lon FROM lolock_users WHERE id=?", rows[i])
+          console.log(gps_rows);
+        }
+
+        )
+      }
+
+      // TODO : 경도 위도 user 데이터에서 가져와야함 그리고 등록된 사용자의 출입 기능에서 구현되야함
+      var weatherData_Json = receiveWeatherInfo(126.965255, 37.240982, date, time);
+      var weatherDataItems = weatherData_Json['response']['body']['items']['item'];
 
   /* 위 테스트 중 DB 접근하면 안됌
 
@@ -188,6 +199,15 @@ router.post('/loradata', function(req, res, next){
   */
 
 });
+
+var sendWeatherInfoToApp = function(androidToken, weatherDataItems) {
+  for(var i in weatherDataItems){
+    if(weatherDataItems[i].category === "POP"){
+      // TODO : 각 찾으려는 category마다 데이터 처리해서 android에 보내줄 것
+      console.log(weatherDataItems[i]);
+    }
+  }
+}
 
 
 router.post('/register', function(req, res, next) {
@@ -240,12 +260,12 @@ router.post('/register', function(req, res, next) {
 
 /* GET 기상청 api를 사용해 현재 지역의 기상정보를 가져옴을 테스트 TODO :테스트 완료후 삭제 */
 router.get('/weatherdata/long/:long/lat/:lat', function(req, res, next) {
-  sendWeatherInfoToApp("123", req.params.long, req.params.lat, 20170716, 2000);
+  receiveWeatherInfo("123", req.params.long, req.params.lat, 20170716, 2000);
 })
 
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
                                                 // 경도       위도    날짜 시간
-var sendWeatherInfoToApp = function(androidToken, gps_long, gps_lat, date, time){
+var receiveWeatherInfo = function(gps_long, gps_lat, date, time){
   child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr){
     if(error !== null){
       console.log('exec error: ' + error);
@@ -271,6 +291,7 @@ var sendWeatherInfoToApp = function(androidToken, gps_long, gps_lat, date, time)
     request(options, function(error, response, body){
       if(!error && response.statusCode == 200){
         console.log(body);
+        return body;
       }
     });
   })
