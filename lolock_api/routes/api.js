@@ -167,14 +167,7 @@ router.post('/loradata', function(req, res, next){
       .spread(function(rows){
         console.log(rows);
         console.log(rows[0].id);
-        return mysql.query("SELECT user_id FROM lolock_register WHERE device_id=?",rows[0].id);
-
-      })
-      .spread(function(userIdRows){
-        console.log(userIdRows);
-        for(var i in userIdRows){
-          mysql.query("SELECT gps_lat, gps_lon FROM lolock_users WHERE id=?", userIdRows[i].user_id);
-        }
+        return mysql.query("SELECT gps_lat, gps_lon FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)",rows[0].id);
       })
       .spread(function(gpsDataRows){
         console.log(gpsDataRows);
