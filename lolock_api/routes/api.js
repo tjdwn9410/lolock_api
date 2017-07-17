@@ -171,10 +171,12 @@ router.post('/loradata', function(req, res, next){
       })
       .spread(function(gpsDataRows){
         console.log(gpsDataRows);
+        var weatherData_Json = receiveWeatherInfo(gpsDataRows[0].gps_lon, gpsDataRows[0].gps_lat, date, time);
+        console.log(weatherData_Json);
       })
 
       // TODO : 경도 위도 user 데이터에서 가져와야함 그리고 등록된 사용자의 출입 기능에서 구현되야함
-      var weatherData_Json = receiveWeatherInfo(126.965255, 37.240982, date, time);
+      //var weatherData_Json = receiveWeatherInfo(126.965255, 37.240982, date, time);
       //var weatherDataItems = weatherData_Json['response']['body']['items']['item'];   // TODO : 에러 수정
       console.log(weatherData_Json);
       //console.log(weatherDataItems);
@@ -292,7 +294,7 @@ var receiveWeatherInfo = function(gps_long, gps_lat, date, time){
     }
     request(options, function(error, response, body){
       if(!error && response.statusCode == 200){
-        //console.log(body);
+        console.log(body);
         var bodyData = body;
         return bodyData;
       }
