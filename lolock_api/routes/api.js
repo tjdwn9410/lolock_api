@@ -169,9 +169,7 @@ router.post('/loradata', function(req, res, next){
           var gps_rows = mysql.query("SELECT gps_lat, gps_lon FROM lolock_users WHERE id=?", rows[i])
           console.log(gps_rows);
         }
-
-        )
-      }
+      })
 
       // TODO : 경도 위도 user 데이터에서 가져와야함 그리고 등록된 사용자의 출입 기능에서 구현되야함
       var weatherData_Json = receiveWeatherInfo(126.965255, 37.240982, date, time);
