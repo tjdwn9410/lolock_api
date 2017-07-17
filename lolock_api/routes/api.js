@@ -8,6 +8,7 @@ var exec = require('child_process').exec,
 var mysql = require('mysql-promise')();
 var mysqlConfig = require('../config/db_config.json');
 mysql.configure(mysqlConfig);
+var moment = require('moment');
 
 
 /*
@@ -126,14 +127,46 @@ router.put('/remotetest', function(req, res, next){
 /* POST loRa subscribe한 데이터 전달받는다.*/
 router.post('/loradata', function(req, res, next){
   var notificationMessage = req.body['m2m:cin'];
-  var content = notificationMessage.con[0];
-  var time = notificationMessage.lt[0];
+  var content = notificationMessage.con[0];             // lora 명령어
+  var lastModifiedTime = notificationMessage.lt[0];     // Thingplug에 전송된 시간
   var uri = notificationMessage.sr[0].split('/');
   var LTID = uri[3].substring(10);
+  var dateArr = lastModifiedTime.split('T')[0].split('-');
+  var timeArr = lastModifiedTime.split('T')[1].split(':');
+  var date = dateArr[0] + dateArr[1] + dateArr[2];
+  var time = Number( timeArr[0] + timeArr[1] );
+
+  // TODO : 동기화 보장
+  if(time > 200){
+    time = '0200';
+  } else if(time > 500){
+    time = '0500';
+  } else if(time > 800){
+    time = '0800'
+  } else if(time > 1100){
+    time = '1100'
+  } else if(time > 1400){
+    time = '1400'
+  } else if(time > 1700){
+    time = '1700'
+  } else if(time > 2000){
+    time = '2000'
+  } else if(time > 2300){
+    time = '2300'
+  } else {
+    time = '2300'
+    moment(lastModifiedTime);
+    date = moment().add(-1,'days').format('YYYYMMDD');    // 하루 빼고 2300
+  }
 
   console.log(req.body);
-  console.log(content, time);
+  console.log(content, lastModifiedTime);     // content 2017-07-16T21:35:14+09:00
   console.log(LTID);
+  console.log('\n');
+
+  sendWeatherInfoToApp("androidtoken", 127.082108, 37.240982, date, time);
+
+  /* 위 테스트 중 DB 접근하면 안됌
 
   // TODO : if content가 불법침입이라면..
 
@@ -152,7 +185,7 @@ router.post('/loradata', function(req, res, next){
   // TODO : else if content가 일회용 문열림이라면
 
   // TODO : else 에러?
-
+  */
 
 });
 
@@ -205,9 +238,12 @@ router.post('/register', function(req, res, next) {
         });
 });
 
+/* GET 기상청 api를 사용해 현재 지역의 기상정보를 가져옴을 테스트 TODO :테스트 완료후 삭제 */
 router.get('/weatherdata/long/:long/lat/:lat', function(req, res, next) {
   sendWeatherInfoToApp("123", req.params.long, req.params.lat, 20170716, 2000);
 })
+
+/* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
                                                 // 경도       위도    날짜 시간
 var sendWeatherInfoToApp = function(androidToken, gps_long, gps_lat, date, time){
   child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr){
