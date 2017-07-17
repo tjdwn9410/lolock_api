@@ -137,26 +137,26 @@ router.post('/loradata', function(req, res, next){
   var time = Number( timeArr[0] + timeArr[1] );
 
   // TODO : 동기화 보장
-  if(time > 200){
-    time = '0200';
-  } else if(time > 500){
-    time = '0500';
-  } else if(time > 800){
-    time = '0800'
-  } else if(time > 1100){
-    time = '1100'
-  } else if(time > 1400){
-    time = '1400'
-  } else if(time > 1700){
-    time = '1700'
-  } else if(time > 2000){
-    time = '2000'
-  } else if(time > 2300){
-    time = '2300'
-  } else {
+  if(time < 200){
     time = '2300'
     moment(lastModifiedTime);
     date = moment().add(-1,'days').format('YYYYMMDD');    // 하루 빼고 2300
+  } else if(time < 500){
+    time = '0200';
+  } else if(time < 800){
+    time = '0500';
+  } else if(time < 1100){
+    time = '0800';
+  } else if(time < 1400){
+    time = '1100';
+  } else if(time < 1700){
+    time = '1400';
+  } else if(time < 2000){
+    time = '1700';
+  } else if(time < 2300){
+    time = '2000';
+  } else {
+    time = '2300';
   }
 
   console.log(content, lastModifiedTime);     // content 2017-07-16T21:35:14+09:00
@@ -177,7 +177,9 @@ router.post('/loradata', function(req, res, next){
 
       // TODO : 경도 위도 user 데이터에서 가져와야함 그리고 등록된 사용자의 출입 기능에서 구현되야함
       var weatherData_Json = receiveWeatherInfo(126.965255, 37.240982, date, time);
-      var weatherDataItems = weatherData_Json['response']['body']['items']['item'];
+      var weatherDataItems = weatherData_Json['response']['body']['items']['item'];   // TODO : 에러 수정
+      console.log(weatherData_Json);
+      console.log(weatherDataItems);
 
   /* 위 테스트 중 DB 접근하면 안됌
 
@@ -292,7 +294,7 @@ var receiveWeatherInfo = function(gps_long, gps_lat, date, time){
     }
     request(options, function(error, response, body){
       if(!error && response.statusCode == 200){
-        console.log(body);
+        //console.log(body);
         return body;
       }
     });
