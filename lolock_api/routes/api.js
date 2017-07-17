@@ -20,6 +20,39 @@ mysql.configure(mysqlConfig);
 */
 
 
+//디바이스 controll Module 실행시킬 명령 code와 호출한 곳의 res를 인자로 넘겨준다.
+function sendControllMessage(code, res) {
+    var headers = {
+        'Accept': 'application/xml',
+        'X-M2M-RI': '00000174d02544fffef0100d_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
+        'X-M2M-Origin': '00000174d02544fffef0100d',
+        'uKey': 'STRqQWE5a28zTlJ0QWQ0d0JyZVlBL1lWTkxCOFlTYm4raE5uSXJKTC95eG9NeUxoS3d4ejY2RWVIYStlQkhNSA==',
+        'Content-Type': 'application/xml'
+    }
+
+    var options = { // 0240771000000174 : AppEUI 와 LTID 는 사용자마다 달라야한다. HOW? / 지금은 테스트라서 직접 입력헀다
+        url: 'https://thingplugpf.sktiot.com:9443/0240771000000174/v1_0/mgmtCmd-00000174d02544fffef0100d_extDevMgmt',
+        method: 'PUT',
+        headers: headers,
+        body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><m2m:mgc xmlns:m2m=\"http://www.onem2m.org/xml/protocols\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><exe>true</exe><exra>" + code + "</exra></m2m:mgc>"
+    }
+
+    request(options, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            parser.parseString(body, function(err, result) {
+                //  console.log(JSON.stringify(result));
+                //console.log(result.ThingPlug.result_code);
+                //console.log(result.ThingPlug.user[0].uKey);
+            });
+            console.log(body);
+            return res.json({
+                code: 'SUCCESS',
+                message: '작성 성공'
+            });
+        }
+    });
+}
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
     console.log("HI");
@@ -76,8 +109,7 @@ router.get('/homemateslist/:LTID', function(req, res, next) {
         .spread(function(rows) {
             var jsonArray = new Array();
             var count = 0;
-            for(var i in rows)
-            {
+            for (var i in rows) {
                 var jsonObj = {
                     "mateImageUrl": rows[i].profile_url,
                     "mateName": rows[i].name,
@@ -87,35 +119,15 @@ router.get('/homemateslist/:LTID', function(req, res, next) {
                 jsonArray.push(jsonObj);
                 count++;
             }
-            var result =
-            {
-              "mates" : jsonArray,
-              "mateNumber" : count
+            var result = {
+                "mates": jsonArray,
+                "mateNumber": count
             }
             res.json(result);
             //res.send(rows);
         });
-    // // TODO : req.headers.ltid와 같은 아이디를 가지는 사용자를 db에서 찾아서 문자열로 가져옴
-    // var homematelist = {
-    //   "mates": [
-    // 	{
-    // 		"mateImageUrl": "유저이미지url",
-    // 		"mateName": "동거인 네임",
-    // 		"mateOutingFlag": "동거인 나갔는지 들어왔는지 알려주는지 여부",
-    // 		"mateDoorOpenTime": "동거인 마지막으로 문 연 시간."
-    // 	},
-    // 	{
-    // 		"mateImageUrl": "유저이미지url",
-    // 		"mateName": "동거인 네임",
-    // 		"mateOutingFlag": "동거인 나갔는지 들어왔는지 알려주는지 여부",
-    // 		"mateDoorOpenTime": "동거인 마지막으로 문 연 시간."
-    // 	}
-    // ],
-    // "mateNumber": 2
-    // }
     // // TODO : 요청한 앱에 동거인 리스트를 body로 실어서 보냄
 
-    //res.send(homematelist);
 })
 
 /* POST User Info, LoRa ID, bluetooth address and GPS / 기기등록 */
@@ -159,20 +171,6 @@ router.put('/remotetest', function(req, res, next) {
             });
             res.send(body);
         }
-
-        request(options, function(error, response, body) {
-            console.log(2);
-            if (!error && response.statusCode == 200) {
-                console.log(3);
-                parser.parseString(body, function(err, result) {
-                    console.log(JSON.stringify(result));
-                    //console.log(result.ThingPlug.result_code);
-                    //console.log(result.ThingPlug.user[0].uKey);
-                });
-                console.log(4);
-                res.send(body);
-            }
-        });
     });
 });
 /* POST loRa subscribe한 데이터 전달받는다.*/
@@ -216,7 +214,8 @@ router.post('/register', function(req, res, next) {
     var userName = jsonRes.registerUserName;
     var userPhoneId = jsonRes.registerUserPhoneId;
     var userBluetoothId = jsonRes.registerUserBluetoothId;
-    var userGPS = jsonRes.registerUserGPS;
+    var userGPS_lat = jsonRes.registerUserGPS_lat;
+    var userGPS_lon = jsonRes.registerUserGPS_lon;
     var getDeviceIdFromDB;
     var getUserIdFromDB;
     console.log(deviceId);
@@ -230,7 +229,7 @@ router.post('/register', function(req, res, next) {
                 });
             } else {
                 getDeviceIdFromDB = rows[0].id;
-                return mysql.query("INSERT INTO lolock_users (name,phone_id,bluetooth_id,gps) VALUES (?,?,?,?)", [userName, userPhoneId, userBluetoothId, userGPS]);
+                return mysql.query("INSERT INTO lolock_users (name,phone_id,bluetooth_id,gps_lat,gps_lon) VALUES (?,?,?,?,?)", [userName, userPhoneId, userBluetoothId, userGPS_lat, userGPS_lon]);
             }
         }).then(function() {
             console.log(userPhoneId);
@@ -243,10 +242,11 @@ router.post('/register', function(req, res, next) {
         })
         .then(function() {
             res.status(201);
-            res.json({
-                code: 'SUCCESS',
-                message: '작성 성공'
-            });
+            sendControllMessage("HI", res);
+            // res.json({
+            //     code: 'SUCCESS',
+            //     message: '작성 성공'
+            // });
         })
         .catch(function(err) {
             console.log(err);
