@@ -162,7 +162,7 @@ router.post('/loradata', function(req, res, next){
   console.log(content, lastModifiedTime);     // content 2017-07-16T21:35:14+09:00
   console.log(LTID);
   console.log('\n');
-
+                                                                // TODO : 이거를 DB에서 받아올 수 있도록 함
   mysql.query("SELECT id FROM lolock_devices WHERE device_id=?",['00000174d02544fffef0103d'])
       .spread(function(rows){
         console.log(rows);
@@ -171,16 +171,9 @@ router.post('/loradata', function(req, res, next){
       })
       .spread(function(gpsDataRows){
         console.log(gpsDataRows);
-        var weatherData_Json = receiveWeatherInfo(gpsDataRows[0].gps_lon, gpsDataRows[0].gps_lat, date, time);
-        console.log(weatherData_Json);
+        // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
+        receiveWeatherInfo(gpsDataRows[0].gps_lon, gpsDataRows[0].gps_lat, date, time);
       })
-
-      // TODO : 경도 위도 user 데이터에서 가져와야함 그리고 등록된 사용자의 출입 기능에서 구현되야함
-      //var weatherData_Json = receiveWeatherInfo(126.965255, 37.240982, date, time);
-      //var weatherDataItems = weatherData_Json['response']['body']['items']['item'];   // TODO : 에러 수정
-      //console.log(weatherData_Json);
-      //console.log(weatherDataItems);
-
   /* 위 테스트 중 DB 접근하면 안됌
 
   // TODO : if content가 불법침입이라면..
@@ -276,7 +269,6 @@ var receiveWeatherInfo = function(gps_long, gps_lat, date, time){
     }
     var nx = stdout.split(' = ')[1].split(',')[0];    // '62, Y'
     var ny = stdout.split(' = ')[2].split('\n')[0];
-    var bodyData;
     console.log(nx);
     console.log(ny);
 
@@ -296,11 +288,9 @@ var receiveWeatherInfo = function(gps_long, gps_lat, date, time){
     request(options, function(error, response, body){
       if(!error && response.statusCode == 200){
         console.log(body);
-        bodyData = body;
       }
     });
   })
-  return bodyData;
 }
 
 
