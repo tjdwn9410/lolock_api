@@ -190,13 +190,11 @@ router.post('/loradata', function(req, res, next) {
       console.log(rows[0].id);
       return mysql.query("SELECT phone_id, gps_lat, gps_lon FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
     })
-    .spread(function(roomateRows) {
-      console.log(roomateRows);
+    .spread(function(roomateRows){
       // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
       var roomateTokenArray = new Array();
       for (var j in roomateRows) {
         roomateTokenArray.push(roomateRows[j].phone_id);
-        console.log("roomateRows[j].phone_id : " + roomateRows[j].phone_id);
       }
       receiveWeatherInfo(roomateTokenArray, roomateRows[0].gps_lon, roomateRows[0].gps_lat, lastModifiedTime);
     })
@@ -304,8 +302,7 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
     }
     var nx = stdout.split(' = ')[1].split(',')[0]; // '62, Y'
     var ny = stdout.split(' = ')[2].split('\n')[0];
-    console.log(nx);
-    console.log(ny);
+    console.log("nx : " + nx + " ny : " + ny);
 
     var POSTuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
     POSTuri += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
@@ -322,7 +319,6 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
     }
     request(options, function(error, response, body) {
       if (!error && response.statusCode == 200) {
-        console.log(body);
 
         var headers = {
           'Content-Type': 'application/xml',
@@ -336,10 +332,15 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
 
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
         weatherdataModifyRequiredData(body, function(weatherRequiredData) {
-          options.body = JSON.stringify(weatherRequiredData);
+          var toAppBody = {};     // push 메세지 body
           for (var i in roomateTokenArray) {
+            toAppBody.data =  JSON.stringify(weatherRequiredData);
+            toAppBody.to = roomateTokenArray[i];
+            options.body = JSON.stringify(toAppBody);
+
             request(options, function(error, response, body) {
               console.log(roomateTokenArray[i] + "finish");
+              console.log("Send to App : " + JSON.stringify(response));
             })
           }
         });
@@ -376,7 +377,7 @@ var weatherdataModifyRequiredData = function(weatherData, callback) {
   }
 
   data.items = new Array(POPItem, PTYItem, SKYItem, T3HItem);
-  console.log("data : " + data.toString());
+  console.log("data : " + JSON.stringify(data));
 
   callback(data);
 }
