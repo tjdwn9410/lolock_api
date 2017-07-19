@@ -337,9 +337,9 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
         weatherdataModifyRequiredData(body, function(weatherRequiredData) {
           options.body = JSON.stringify(weatherRequiredData);
-          for (var i in roomateTokenArr) {
+          for (var i in roomateTokenArray) {
             request(options, function(error, response, body) {
-              console.log(roomateTokenArr[i] + "finish");
+              console.log(roomateTokenArray[i] + "finish");
             })
           }
         });
