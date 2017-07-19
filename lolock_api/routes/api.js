@@ -196,6 +196,7 @@ router.post('/loradata', function(req, res, next) {
       var roomateTokenArray = new Array();
       for (var j in roomateRows) {
         roomateTokenArray.push(roomateRows[j].phone_id);
+        console.log("roomateRows[j].phone_id : " + roomateRows[j].phone_id);
       }
       receiveWeatherInfo(roomateTokenArray, roomateRows[0].gps_lon, roomateRows[0].gps_lat, lastModifiedTime);
     })
@@ -334,10 +335,11 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
         }
 
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
-        weatherdataModifyRequiredData(body, function(roomateTokenArr) {
+        weatherdataModifyRequiredData(body, function(weatherRequiredData) {
+          options.body = JSON.stringify(weatherRequiredData);
           for (var i in roomateTokenArr) {
             request(options, function(error, response, body) {
-              console.log(roomateTokenArr[i].toString() + "finish");
+              console.log(roomateTokenArr[i] + "finish");
             })
           }
         });
@@ -352,10 +354,7 @@ var weatherdataModifyRequiredData = function(weatherData, callback) {
   var SKYItem = {}; // 하늘 상태  / 1 : 맑음 / 2: 구름 조금 / 3: 구름 많음 / 4 : 흐림
   var T3HItem = {}; // 3시간 기온 / 온도로 나옴
   var weatherDataobj = eval("("+weatherData+")");
-  console.log("weatherDataobj typeof : " + typeof(weatherDataobj));
   var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
-  console.log("weatherDataItemArray typeof : " + typeof(weatherDataItemArray));
-  console.log("weatherDataItemArray : " + weatherDataItemArray);
   var data = new Object();
   data.fcstDate = weatherDataItemArray[0].fcstDate;
   data.fcstTime = weatherDataItemArray[0].fcstTime;
@@ -377,7 +376,7 @@ var weatherdataModifyRequiredData = function(weatherData, callback) {
   }
 
   data.items = new Array(POPItem, PTYItem, SKYItem, T3HItem);
-  console.log(data.toString());
+  console.log("data : " + data.toString());
 
   callback(data);
 }
