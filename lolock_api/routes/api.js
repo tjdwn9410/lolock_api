@@ -25,17 +25,17 @@ var moment = require('moment');
 
 
 //디바이스 controll Module 실행시킬 명령 code와 호출한 곳의 res를 인자로 넘겨준다.
-function sendControllMessage(code,device_id, res) {
+function sendControllMessage(code, device_id, res) {
     var headers = {
         'Accept': 'application/xml',
-        'X-M2M-RI': '00000174d02544fffe'+device_id+'_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
-        'X-M2M-Origin': '00000174d02544fffe'+device_id,
+        'X-M2M-RI': device_id + '_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
+        'X-M2M-Origin': device_id,
         'uKey': 'STRqQWE5a28zTlJ0QWQ0d0JyZVlBL1lWTkxCOFlTYm4raE5uSXJKTC95eG9NeUxoS3d4ejY2RWVIYStlQkhNSA==',
         'Content-Type': 'application/xml'
     }
 
     var options = { // 0240771000000174 : AppEUI 와 LTID 는 사용자마다 달라야한다. HOW? / 지금은 테스트라서 직접 입력헀다
-        url: 'https://thingplugpf.sktiot.com:9443/0240771000000174/v1_0/mgmtCmd-00000174d02544fffe'+device_id+'_extDevMgmt',
+        url: 'https://thingplugpf.sktiot.com:9443/0240771000000174/v1_0/mgmtCmd-' + device_id + '_extDevMgmt',
         method: 'PUT',
         headers: headers,
         body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><m2m:mgc xmlns:m2m=\"http://www.onem2m.org/xml/protocols\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><exe>true</exe><exra>" + code + "</exra></m2m:mgc>"
@@ -136,9 +136,23 @@ router.get('/homemateslist/:LTID', function(req, res, next) {
 
 //LoLock Remote Open
 router.put('/remote-open', function(req, res, next) {
-  var jsonRes = req.body;
-  var openDeviceId = "00000174d02544fffe"+jsonRes.openDeviceId;
-  sendControllMessage("1",openDeviceId,res);
+    var jsonRes = req.body;
+    var openDeviceId = jsonRes.openDeviceId;
+    console.log(openDeviceId);
+    mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [openDeviceId])
+        .spread(function(rows) {
+          console.log(rows);
+            return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
+        })
+        .spread(function(rows) {
+          console.log(rows);
+            return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
+
+        })
+        .spread(function(rows) {
+          console.log(rows);
+          sendControllMessage("1", rows[0].device_id, res);
+        })
 })
 
 /* PUT Lolock to open / 로락을 원격으로 열 수 있도록 데이터 전송 */
@@ -246,7 +260,7 @@ router.post('/loradata', function(req, res, next) {
 
 router.post('/register', function(req, res, next) {
     var jsonRes = req.body;
-    var deviceId = "00000174d02544fffe"+jsonRes.registerDeviceId;
+    var deviceId = "00000174d02544fffe" + jsonRes.registerLoraId;
     var userName = jsonRes.registerUserName;
     var userPhoneId = jsonRes.registerUserPhoneId;
     var userBluetoothId = jsonRes.registerUserBluetoothId;
@@ -282,7 +296,7 @@ router.post('/register', function(req, res, next) {
         })
         .spread(function(rows) {
             res.status(201);
-            sendControllMessage("00"+rows.length+userBluetoothId,deviceId, res);
+            sendControllMessage("00" + rows.length + userBluetoothId, deviceId, res);
             // 0 멤버등록
             // 외출상태 (0 or 1)
             // 멤버인덱스
