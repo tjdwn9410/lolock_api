@@ -337,7 +337,7 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
         weatherdataModifyRequiredData(body, function(roomateTokenArr) {
           for (var i in roomateTokenArr) {
             request(options, function(error, response, body) {
-              console.log(roomateTokenArr[i].tostring() + "finish");
+              console.log(roomateTokenArr[i].toString() + "finish");
             })
           }
         });
@@ -377,7 +377,7 @@ var weatherdataModifyRequiredData = function(weatherData, callback) {
   }
 
   data.items = new Array(POPItem, PTYItem, SKYItem, T3HItem);
-  console.log(data.tostring());
+  console.log(data.toString());
 
   callback(data);
 }
