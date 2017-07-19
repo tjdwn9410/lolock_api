@@ -25,17 +25,17 @@ var moment = require('moment');
 
 
 //디바이스 controll Module 실행시킬 명령 code와 호출한 곳의 res를 인자로 넘겨준다.
-function sendControllMessage(code, res) {
+function sendControllMessage(code,device_id, res) {
     var headers = {
         'Accept': 'application/xml',
-        'X-M2M-RI': '00000174d02544fffef0100d_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
-        'X-M2M-Origin': '00000174d02544fffef0100d',
+        'X-M2M-RI': '00000174d02544fffe'+device_id+'_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
+        'X-M2M-Origin': '00000174d02544fffe'+device_id,
         'uKey': 'STRqQWE5a28zTlJ0QWQ0d0JyZVlBL1lWTkxCOFlTYm4raE5uSXJKTC95eG9NeUxoS3d4ejY2RWVIYStlQkhNSA==',
         'Content-Type': 'application/xml'
     }
 
     var options = { // 0240771000000174 : AppEUI 와 LTID 는 사용자마다 달라야한다. HOW? / 지금은 테스트라서 직접 입력헀다
-        url: 'https://thingplugpf.sktiot.com:9443/0240771000000174/v1_0/mgmtCmd-00000174d02544fffef0100d_extDevMgmt',
+        url: 'https://thingplugpf.sktiot.com:9443/0240771000000174/v1_0/mgmtCmd-00000174d02544fffe'+device_id+'_extDevMgmt',
         method: 'PUT',
         headers: headers,
         body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><m2m:mgc xmlns:m2m=\"http://www.onem2m.org/xml/protocols\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><exe>true</exe><exra>" + code + "</exra></m2m:mgc>"
@@ -134,6 +134,12 @@ router.get('/homemateslist/:LTID', function(req, res, next) {
 
 })
 
+//LoLock Remote Open
+router.put('/remote-open', function(req, res, next) {
+  var jsonRes = req.body;
+  var openDeviceId = "00000174d02544fffe"+jsonRes.openDeviceId;
+  sendControllMessage("1",openDeviceId,res);
+})
 
 /* PUT Lolock to open / 로락을 원격으로 열 수 있도록 데이터 전송 */
 
@@ -173,74 +179,74 @@ router.put('/remotetest', function(req, res, next) {
 });
 
 /* POST loRa subscribe한 데이터 전달받는다.*/
-router.post('/loradata', function(req, res, next){
-  var notificationMessage = req.body['m2m:cin'];
-  var content = notificationMessage.con[0];             // lora 명령어
-  var lastModifiedTime = notificationMessage.lt[0];     // Thingplug에 전송된 시간
-  var uri = notificationMessage.sr[0].split('/');
-  var LTID = uri[3].substring(10);
-  var dateArr = lastModifiedTime.split('T')[0].split('-');
-  var timeArr = lastModifiedTime.split('T')[1].split(':');
-  var date = dateArr[0] + dateArr[1] + dateArr[2];
-  var time = Number( timeArr[0] + timeArr[1] );
+router.post('/loradata', function(req, res, next) {
+    var notificationMessage = req.body['m2m:cin'];
+    var content = notificationMessage.con[0]; // lora 명령어
+    var lastModifiedTime = notificationMessage.lt[0]; // Thingplug에 전송된 시간
+    var uri = notificationMessage.sr[0].split('/');
+    var LTID = uri[3].substring(10);
+    var dateArr = lastModifiedTime.split('T')[0].split('-');
+    var timeArr = lastModifiedTime.split('T')[1].split(':');
+    var date = dateArr[0] + dateArr[1] + dateArr[2];
+    var time = Number(timeArr[0] + timeArr[1]);
 
-  // TODO : 동기화 보장
-  if(time < 200){
-    time = '2300'
-    moment(lastModifiedTime);
-    date = moment().add(-1,'days').format('YYYYMMDD');    // 하루 빼고 2300
-  } else if(time < 500){
-    time = '0200';
-  } else if(time < 800){
-    time = '0500';
-  } else if(time < 1100){
-    time = '0800';
-  } else if(time < 1400){
-    time = '1100';
-  } else if(time < 1700){
-    time = '1400';
-  } else if(time < 2000){
-    time = '1700';
-  } else if(time < 2300){
-    time = '2000';
-  } else {
-    time = '2300';
-  }
+    // TODO : 동기화 보장
+    if (time < 200) {
+        time = '2300'
+        moment(lastModifiedTime);
+        date = moment().add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
+    } else if (time < 500) {
+        time = '0200';
+    } else if (time < 800) {
+        time = '0500';
+    } else if (time < 1100) {
+        time = '0800';
+    } else if (time < 1400) {
+        time = '1100';
+    } else if (time < 1700) {
+        time = '1400';
+    } else if (time < 2000) {
+        time = '1700';
+    } else if (time < 2300) {
+        time = '2000';
+    } else {
+        time = '2300';
+    }
 
-  console.log(content, lastModifiedTime);     // content 2017-07-16T21:35:14+09:00
-  console.log(LTID);
-  console.log('\n');
-                                                                // TODO : 이거를 DB에서 받아올 수 있도록 함
-  mysql.query("SELECT id FROM lolock_devices WHERE device_id=?",['00000174d02544fffef0103d'])
-      .spread(function(rows){
-        console.log(rows);
-        console.log(rows[0].id);
-        return mysql.query("SELECT gps_lat, gps_lon FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)",rows[0].id);
-      })
-      .spread(function(gpsDataRows){
-        console.log(gpsDataRows);
-        // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
-        receiveWeatherInfo(gpsDataRows[0].gps_lon, gpsDataRows[0].gps_lat, date, time);
-      })
-  /* 위 테스트 중 DB 접근하면 안됌
+    console.log(content, lastModifiedTime); // content 2017-07-16T21:35:14+09:00
+    console.log(LTID);
+    console.log('\n');
+    // TODO : 이거를 DB에서 받아올 수 있도록 함
+    mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", ['00000174d02544fffef0103d'])
+        .spread(function(rows) {
+            console.log(rows);
+            console.log(rows[0].id);
+            return mysql.query("SELECT gps_lat, gps_lon FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
+        })
+        .spread(function(gpsDataRows) {
+            console.log(gpsDataRows);
+            // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
+            receiveWeatherInfo(gpsDataRows[0].gps_lon, gpsDataRows[0].gps_lat, date, time);
+        })
+    /* 위 테스트 중 DB 접근하면 안됌
 
-  // TODO : if content가 불법침입이라면..
+    // TODO : if content가 불법침입이라면..
 
-  // TODO : else if content가 등록된 사용자의 출입(+ 자동 문열림 기능)이라면
-  // 로그도 DB에 남겨야 함
-  mysql.query("SELECT id FROM lolock_register WHERE device_id=?", [LTID])
-      .spread(function(rows){
-        var phoneList = new Array();
-        for (var i in rows){
-          phoneList.push(mysql.query("SELECT phone_id FROM lolock_users WHERE id=?", rows[i]));
-        }
-    });
-    */
+    // TODO : else if content가 등록된 사용자의 출입(+ 자동 문열림 기능)이라면
+    // 로그도 DB에 남겨야 함
+    mysql.query("SELECT id FROM lolock_register WHERE device_id=?", [LTID])
+        .spread(function(rows){
+          var phoneList = new Array();
+          for (var i in rows){
+            phoneList.push(mysql.query("SELECT phone_id FROM lolock_users WHERE id=?", rows[i]));
+          }
+      });
+      */
 });
 
 router.post('/register', function(req, res, next) {
     var jsonRes = req.body;
-    var deviceId = jsonRes.registerDeviceId;
+    var deviceId = "00000174d02544fffe"+jsonRes.registerDeviceId;
     var userName = jsonRes.registerUserName;
     var userPhoneId = jsonRes.registerUserPhoneId;
     var userBluetoothId = jsonRes.registerUserBluetoothId;
@@ -271,8 +277,16 @@ router.post('/register', function(req, res, next) {
             return mysql.query("INSERT INTO lolock_register (user_id,device_id) VALUES (?,?)", [getUserIdFromDB, getDeviceIdFromDB]);
         })
         .then(function() {
+            console.log(getUserIdFromDB);
+            return mysql.query("SELECT * FROM lolock_register WHERE device_id = ?", [getDeviceIdFromDB]);
+        })
+        .spread(function(rows) {
             res.status(201);
-            sendControllMessage("HI", res);
+            sendControllMessage("00"+rows.length+userBluetoothId,deviceId, res);
+            // 0 멤버등록
+            // 외출상태 (0 or 1)
+            // 멤버인덱스
+            // bluetooth_id
             // res.json({
             //     code: 'SUCCESS',
             //     message: '작성 성공'
@@ -290,36 +304,36 @@ router.post('/register', function(req, res, next) {
 });
 
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
-                                                // 경도       위도    날짜 시간
-var receiveWeatherInfo = function(gps_long, gps_lat, date, time){
-  child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr){
-    if(error !== null){
-      console.log('exec error: ' + error);
-    }
-    var nx = stdout.split(' = ')[1].split(',')[0];    // '62, Y'
-    var ny = stdout.split(' = ')[2].split('\n')[0];
-    console.log(nx);
-    console.log(ny);
+// 경도       위도    날짜 시간
+var receiveWeatherInfo = function(gps_long, gps_lat, date, time) {
+    child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr) {
+        if (error !== null) {
+            console.log('exec error: ' + error);
+        }
+        var nx = stdout.split(' = ')[1].split(',')[0]; // '62, Y'
+        var ny = stdout.split(' = ')[2].split('\n')[0];
+        console.log(nx);
+        console.log(ny);
 
-    var POSTuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
-    POSTuri += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
-    POSTuri += '&base_date='+date;
-    POSTuri += '&base_time='+time;
-    POSTuri += '&nx='+nx;
-    POSTuri += '&ny='+ny;
-    POSTuri += '&numOfRows=10';
-    POSTuri += '&pageNo=1';
-    POSTuri += '&_type=json';
-    var options = {
-      url : POSTuri,
-      method : 'GET',
-    }
-    request(options, function(error, response, body){
-      if(!error && response.statusCode == 200){
-        console.log(body);
-      }
-    });
-  })
+        var POSTuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
+        POSTuri += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
+        POSTuri += '&base_date=' + date;
+        POSTuri += '&base_time=' + time;
+        POSTuri += '&nx=' + nx;
+        POSTuri += '&ny=' + ny;
+        POSTuri += '&numOfRows=10';
+        POSTuri += '&pageNo=1';
+        POSTuri += '&_type=json';
+        var options = {
+            url: POSTuri,
+            method: 'GET',
+        }
+        request(options, function(error, response, body) {
+            if (!error && response.statusCode == 200) {
+                console.log(body);
+            }
+        });
+    })
 }
 
 
