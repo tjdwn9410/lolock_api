@@ -373,7 +373,7 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
                 console.log(roomateTokenArray[cnt] + "완료");
                 repeatPromise(cnt++);
               } else {
-                console.log(i + "실패");
+                console.log(cnt + "실패");
                 repeatPromise(cnt++);
               }
             })
