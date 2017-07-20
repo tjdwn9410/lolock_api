@@ -339,7 +339,9 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
       if (!error && response.statusCode == 200) {
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
         weatherdataModifyRequiredData(body, function(weatherRequiredData) {
-          for (var i in roomateTokenArray) {
+          var check = false;
+          for (var i = 0; i < roomateTokenArray.length;) {
+            check = false;
             var headers = {
               'Content-Type': 'application/json',
               'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
@@ -352,6 +354,9 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             var toAppBody = {}; // push 메세지 body
             toAppBody.data = weatherRequiredData;
             toAppBody.to = roomateTokenArray[i];
+            if(i === 1){
+              toAppBody.to = "cJIEdYvTNZs:APA91bHReTNw_365hONfbdX7miF0Ex28Gb6QBtL5P7PXQAeP0Fd8pGJ0hJJsOG-QrJJJbSgisrAH7QQGDUMku0nBoc4WfcAsXwheWwqqNKh_b6j8n2OvjtIJXr5R_2hKPMZUS-g-F77k";
+            }
             options.body = JSON.stringify(toAppBody);
             console.log("options.body : " + options.body + '\n');
             // TODO : 동기화 할 것 promise 사용
@@ -368,9 +373,12 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
               })
             }).then(function(text) {
               console.log(text);
+              i++; check = true;
             }, function(text) {
               console.log("err" + text);
+              i++; check = true;
             })
+            while(!check) {console.log("delay");}
           }
         })
       }
