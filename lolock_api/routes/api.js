@@ -215,7 +215,7 @@ router.post('/loradata', function(req, res, next) {
       for (var j in roomateRows) {
         roomateTokenArray.push(roomateRows[j].phone_id);
       }
-      receiveWeatherInfo(roomateTokenArray, roomateRows[0].gps_lon, roomateRows[0].gps_lat, lastModifiedTime);
+      receiveWeatherInfo(roomateTokenArray, roomateRows[0].gps_lon, roomateRows[0].gps_lat, lastModifiedTime, 0);
     })
   /* 위 테스트 중 DB 접근하면 안됌
 
@@ -292,29 +292,47 @@ router.post('/register', function(req, res, next) {
     });
 });
 
+/* GET  */
+router.get('/weatherdata/:LTID', function(req, res, next) {
+  var LTID = req.params.LTID;
+
+  mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", LTID)
+    .spread(function(rows) {
+      console.log(rows[0].id);
+      return mysql.query("SELECT phone_id, gps_lat, gps_lon FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
+    })
+    .spread(function(roomateRows) {
+      var roomateTokenArray = new Array();
+      for (var j in roomateRows) {
+        roomateTokenArray.push(roomateRows[j].phone_id);
+      }
+      receiveWeatherInfo(roomateTokenArray, roomateRows[0].gps_lon, roomateRows[0].gps_lat, lastModifiedTime, 1, res);
+    })
+})
+
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
 // 경도       위도    날짜+시간
-var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModifiedTime) {
-var dateArr = lastModifiedTime.split('T')[0].split('-');
-var timeArr = lastModifiedTime.split('T')[1].split(':');
-var date = dateArr[0] + dateArr[1] + dateArr[2];
-var time = Number(timeArr[0] + timeArr[1]);
-time = time - (time % 100) - 100;
+var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModifiedTime, flag, responseToReq) {
+  var dateArr = lastModifiedTime.split('T')[0].split('-');
+  var timeArr = lastModifiedTime.split('T')[1].split(':');
+  var date = dateArr[0] + dateArr[1] + dateArr[2];
+  var time = Number(timeArr[0] + timeArr[1]);
+  time = time - (time % 100) - 100;
 
-// TODO : 동기화 보장
-if (time < 0) { // time이 00시--분이라면 하루 빼고 2300만들기
-  time = '2300'
-  moment(lastModifiedTime);
-  date = moment().add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
-} else { // 그 외
-  var tmp = '0000';
-  time += "";
-  tmp = tmp.substring(time.length);
-  tmp += time;
-  time = tmp;
-}
+  // TODO : 동기화 보장
+  if (time < 0) { // time이 00시--분이라면 하루 빼고 2300만들기
+    time = '2300'
+    moment(lastModifiedTime);
+    date = moment().add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
+  } else { // 그 외
+    var tmp = '0000';
+    time += "";
+    tmp = tmp.substring(time.length);
+    tmp += time;
+    time = tmp;
+  }
 
-child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr) {
+  child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr) {
     if (error !== null) {
       console.log('exec error: ' + error);
     }
@@ -336,37 +354,44 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
       method: 'GET',
     }
     request(options, function(error, response, body) {
-      if (!error && response.statusCode == 200) {
+      if(flag === 1){
+        responseToReq.send(JSON.stringify(weatherdataModifyRequiredData(body, function(){
+          console.log("날씨 response 성공");
+        })));
+      }
+      else if (!error && response.statusCode == 200) {
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
-        weatherdataModifyRequiredData(body, function(weatherRequiredData) {
-          //for (var i in roomateTokenArray) {
-          var repeatPromise = function(cnt, callback){
-            console.log("cnt : " + cnt);
-            if(cnt == roomateTokenArray.length){
-              callback();
-              return;
-            }
-            sendPushMessage(roomateTokenArray[cnt], weatherRequiredData)
-            .then(function(text){
-              console.log(text)
-              repeatPromise(cnt+1, callback);
-            }, function(err){
-              console.log(err)
-              repeatPromise(cnt+1, callback);
-            })
-          }
-          var cnt = 0;
-          repeatPromise(cnt, function(){
-            console.log("보내기 끝");
-          })
-        })
+        weatherdataModifyRequiredData(body, sendPushMessageToRoommate)
       }
     });
   })
 };
 
-var sendPushMessage = function(androidToken, dataObj){
-  return new Promise(function(resolve, reject){
+var sendPushMessageToRoommate = function(weatherRequiredData) {
+  //for (var i in roomateTokenArray) {
+  var repeatPromise = function(cnt, callback) {
+    console.log("cnt : " + cnt);
+    if (cnt == roomateTokenArray.length) {
+      callback();
+      return;
+    }
+    sendPushMessage(roomateTokenArray[cnt], weatherRequiredData)
+      .then(function(text) {
+        console.log(text)
+        repeatPromise(cnt + 1, callback);
+      }, function(err) {
+        console.log(err)
+        repeatPromise(cnt + 1, callback);
+      })
+  }
+  var cnt = 0;
+  repeatPromise(cnt, function() {
+    console.log("보내기 끝");
+  })
+}
+
+var sendPushMessage = function(androidToken, dataObj) {
+  return new Promise(function(resolve, reject) {
     // TODO
     var headers = {
       'Content-Type': 'application/json',
@@ -424,6 +449,7 @@ var weatherdataModifyRequiredData = function(weatherData, callback) {
   console.log("data : " + JSON.stringify(data));
 
   callback(data);
+  return data;
 };
 
 module.exports = router;
