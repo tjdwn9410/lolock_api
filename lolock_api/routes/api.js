@@ -352,8 +352,8 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             var toAppBody = {}; // push 메세지 body
             toAppBody.data = weatherRequiredData;
             toAppBody.to = roomateTokenArray[i];
-            options.body = toAppBody;
-            console.log(JSON.stringify(toAppBody) + '\n');
+            options.body = JSON.stringify(toAppBody);
+            console.log("options.body : " + options.body + '\n');
             // TODO : 동기화 할 것 promise 사용
             var _promise = new Promise(function(resolve, reject) {
               request(options, function(error, response, body) {
