@@ -322,9 +322,9 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
   // TODO : 동기화 보장
   if (time < 0) { // time이 00시--분이라면 하루 빼고 2300만들기
     time = '2300'
-    console.log(lastModifiedTime + " 하루뺌 : " + moment(lastModifiedTime).format('YYYYMMDD'));
+    console.log(lastModifiedTime + " 하루뺌 : " + moment(date).format('YYYYMMDD'));
 
-    date = moment(lastModifiedTime).add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
+    date = moment(date).add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
   } else { // 그 외
     var tmp = '0000';
     time += "";
