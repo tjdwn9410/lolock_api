@@ -369,12 +369,9 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             // TODO : 동기화 할 것 promise 사용
             request(options, function(error, response, body) {
               console.log("promise : " + cnt);
-              console.log("response body : " + response.body);
-              console.log("response.body.success : " + response.body.success);
-              console.log("response.body.multicast_id : " + response.body.multicast_id);
-              console.log("response.body.failure : " + response.body.failure);
-              console.log("response.body.success s : " + JSON.stringify(response.body.success));
-              if (response.body.success === 1) {
+              console.log("response body : " + JSON.stringify(response.body));
+              console.log("response body success : " + JSON.stringify(response.body).success);
+              if (JSON.stringify(response.body).success === 1) {
                 console.log(roomateTokenArray[cnt] + "완료");
                 repeatPromise(cnt+1, callback);
               } else {
