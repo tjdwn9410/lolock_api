@@ -358,7 +358,7 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             toAppBody.data = weatherRequiredData;
 
             // TODO : UPDATE 해야함
-            if(cnt === 2){
+            if(cnt === 0){
               toAppBody.to = "cJIEdYvTNZs:APA91bHReTNw_365hONfbdX7miF0Ex28Gb6QBtL5P7PXQAeP0Fd8pGJ0hJJsOG-QrJJJbSgisrAH7QQGDUMku0nBoc4WfcAsXwheWwqqNKh_b6j8n2OvjtIJXr5R_2hKPMZUS-g-F77k";
             }else {
               toAppBody.to = roomateTokenArray[cnt];
@@ -369,12 +369,12 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             request(options, function(error, response, body) {
               console.log("promise : " + cnt);
               console.log("response body : " + response.body);
-              if (body.success == 1) {
+              if (response.body.success === 1) {
                 console.log(roomateTokenArray[cnt] + "완료");
-                repeatPromise(cnt+1);
+                repeatPromise(cnt+1, callback);
               } else {
                 console.log(cnt + "실패");
-                repeatPromise(cnt+1);
+                repeatPromise(cnt+1, callback);
               }
             })
           }
