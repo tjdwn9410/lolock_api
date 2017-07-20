@@ -358,8 +358,8 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             var _promise = new Promise(function(resolve, reject) {
               request(options, function(error, response, body) {
                 console.log("promise : " + i);
-                console.log(response);
-                console.log(body);
+                console.log("response body : " + response.body);
+                console.log("body : " + body);
                 if (body.success == 1) {
                   resolve(roomateTokenArray[i] + "완료");
                 } else {
