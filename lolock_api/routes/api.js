@@ -344,6 +344,7 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             console.log("cnt : " + cnt);
             if(cnt == roomateTokenArray.length){
               callback();
+              return;
             }
             var headers = {
               'Content-Type': 'application/json',
