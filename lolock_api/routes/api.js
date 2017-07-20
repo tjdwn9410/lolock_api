@@ -306,7 +306,7 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
       for (var j in roomateRows) {
         roomateTokenArray.push(roomateRows[j].phone_id);
       }
-      receiveWeatherInfo(roomateTokenArray, roomateRows[0].gps_lon, roomateRows[0].gps_lat, lastModifiedTime, 1, res);
+      receiveWeatherInfo(roomateTokenArray, roomateRows[0].gps_lon, roomateRows[0].gps_lat, "2017-07-20T23:57:14+09:00", 1, res);
     })
 })
 
