@@ -356,14 +356,19 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
                         // TODO : 동기화 할 것 promise 사용
                         var _promise = new Promise(function(resolve, reject){
                           request(options, function(error, response, body) {
-                              if(response.body.success == 1){
-                                resolve(roomateTokenArray[i]  + "완료");
-                              }
-                              else {
-                                reject("실패");
-                              }
+                            console.log(body);
+                            console.log(body.success);
+                            if(response.body.success == 1){
+                              resolve(roomateTokenArray[i]  + "완료");
+                            }
+                            else {
+                              reject("실패");
+                            }
                           }).then(function(text){
                             console.log(text);
+                          }, function(text){
+                            console.log("err" + text);
+                          }
                           })
                         })
                     }
@@ -387,13 +392,13 @@ var weatherdataModifyRequiredData = function(weatherData, callback) {
     for (var i in weatherDataItemArray) {
         if (weatherDataItemArray[i].category === "PTY") {
             PTYItem.category = weatherDataItemArray[i].category;
-            PTYItem.fcstValue = weatherDataItemArray[i].fcstValue;
+            PTYItem.obsrValue = weatherDataItemArray[i].obsrValue;
         } else if (weatherDataItemArray[i].category === "SKY") {
             SKYItem.category = weatherDataItemArray[i].category;
-            SKYItem.fcstValue = weatherDataItemArray[i].fcstValue;
+            SKYItem.obsrValue = weatherDataItemArray[i].obsrValue;
         } else if (weatherDataItemArray[i].category === "T1H") {
             T1HItem.category = weatherDataItemArray[i].category;
-            T1HItem.fcstValue = weatherDataItemArray[i].fcstValue;
+            T1HItem.obsrValue = weatherDataItemArray[i].obsrValue;
         }
     }
 
