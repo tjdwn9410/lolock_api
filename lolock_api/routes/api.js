@@ -350,8 +350,8 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
                 var toAppBody = {}; // push 메세지 body
                 toAppBody.data = weatherRequiredData;
                 toAppBody.to = roomateTokenArray[i];
-                options.body = JSON.stringify(toAppBody);
-                console.log(toAppBody);
+                options.body = toAppBody;
+                console.log(toAppBody + '\n');
                 // TODO : 동기화 할 것 promise 사용
                 var _promise = new Promise(function(resolve, reject){
                   request(options, function(error, response, body) {
@@ -361,18 +361,19 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
                       resolve(roomateTokenArray[i]  + "완료");
                     }
                     else {
-                      reject("실패");
+                      reject(i + "실패");
                     }
-                    }).then(function(text){
-                      console.log(text);
-                    }, function(text){
-                      console.log("err" + text);
-                    })
                   })
-                }
-            });
-          }
-      });
+                }.then(function(text){
+                  console.log(text);
+                }, function(text){
+                  console.log("err" + text);
+                })
+              })
+            }
+          });
+        }
+    });
   });
 };
 
