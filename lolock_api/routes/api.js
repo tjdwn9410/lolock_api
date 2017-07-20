@@ -298,29 +298,18 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
     var dateArr = lastModifiedTime.split('T')[0].split('-');
     var timeArr = lastModifiedTime.split('T')[1].split(':');
     var date = dateArr[0] + dateArr[1] + dateArr[2];
-    var time = Number(timeArr[0] + timeArr[1]);
+    var time = Number(timeArr[0] + timeArr[1]); time = time - (time % 100) - 100;
 
     // TODO : 동기화 보장
-    if (time < 200) {
+    if (time < 0) { // time이 00시--분이라면 하루 빼고 2300만들기
         time = '2300'
         moment(lastModifiedTime);
         date = moment().add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
-    } else if (time < 500) {
-        time = '0200';
-    } else if (time < 800) {
-        time = '0500';
-    } else if (time < 1100) {
-        time = '0800';
-    } else if (time < 1400) {
-        time = '1100';
-    } else if (time < 1700) {
-        time = '1400';
-    } else if (time < 2000) {
-        time = '1700';
-    } else if (time < 2300) {
-        time = '2000';
-    } else {
-        time = '2300';
+    } else {  // 그 외
+      var tmp = '0000'; time += "";
+      tmp = tmp.substring(time.length);
+      tmp += time;
+      time = tmp;
     }
 
     child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr) {
@@ -331,15 +320,15 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
         var ny = stdout.split(' = ')[2].split('\n')[0];
         console.log("nx : " + nx + " ny : " + ny);
 
-        var POSTuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
-        POSTuri += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
-        POSTuri += '&base_date=' + date;
-        POSTuri += '&base_time=' + time;
-        POSTuri += '&nx=' + nx;
-        POSTuri += '&ny=' + ny;
-        POSTuri += '&numOfRows=10';
-        POSTuri += '&pageNo=1';
-        POSTuri += '&_type=json';
+        var GETuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastGrib?';
+        GETuri += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
+        GETuri += '&base_date=' + date;
+        GETuri += '&base_time=' + time;
+        GETuri += '&nx=' + nx;
+        GETuri += '&ny=' + ny;
+        GETuri += '&numOfRows=15';
+        GETuri += '&pageNo=1';
+        GETuri += '&_type=json';
         var options = {
             url: POSTuri,
             method: 'GET',
@@ -365,9 +354,17 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
                         toAppBody.to = roomateTokenArray[i];
                         options.body = JSON.stringify(toAppBody);
                         // TODO : 동기화 할 것 promise 사용
-                        request(options, function(error, response, body) {
-                            console.log(roomateTokenArray[i] + "finish");
-                            console.log("Send to App : " + JSON.stringify(response));
+                        var _promise = new Promise(function(resolve, reject){
+                          request(options, function(error, response, body) {
+                              if(response.body.success == 1){
+                                resolve(roomateTokenArray[i]  + "완료");
+                              }
+                              else {
+                                reject("실패");
+                              }
+                          }).then(function(text){
+                            console.log(text);
+                          })
                         })
                     }
                 });
@@ -377,33 +374,30 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
 };
 
 var weatherdataModifyRequiredData = function(weatherData, callback) {
-    var POPItem = {}; // 강수 확률  / %로 나옴
     var PTYItem = {}; // 강수 형태  / 0 : 없음 / 1 : 비 / 2: 비/눈 / 3 : 눈
     var SKYItem = {}; // 하늘 상태  / 1 : 맑음 / 2: 구름 조금 / 3: 구름 많음 / 4 : 흐림
-    var T3HItem = {}; // 3시간 기온 / 온도로 나옴
+    var T1HItem = {}; // 1시간 기온 / 온도로 나옴
+
     var weatherDataobj = eval("(" + weatherData + ")");
     var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
     var data = new Object();
-    data.fcstDate = weatherDataItemArray[0].fcstDate;
-    data.fcstTime = weatherDataItemArray[0].fcstTime;
+    data.baseTime = weatherDataItemArray[0].baseTime;
+    data.baseDate = weatherDataItemArray[0].baseDate;
 
     for (var i in weatherDataItemArray) {
-        if (weatherDataItemArray[i].category === "POP") {
-            POPItem.category = weatherDataItemArray[i].category;
-            POPItem.fcstValue = weatherDataItemArray[i].fcstValue;
-        } else if (weatherDataItemArray[i].category === "PTY") {
+        if (weatherDataItemArray[i].category === "PTY") {
             PTYItem.category = weatherDataItemArray[i].category;
             PTYItem.fcstValue = weatherDataItemArray[i].fcstValue;
         } else if (weatherDataItemArray[i].category === "SKY") {
             SKYItem.category = weatherDataItemArray[i].category;
             SKYItem.fcstValue = weatherDataItemArray[i].fcstValue;
-        } else if (weatherDataItemArray[i].category === "T3H") {
+        } else if (weatherDataItemArray[i].category === "T1H") {
             T3HItem.category = weatherDataItemArray[i].category;
             T3HItem.fcstValue = weatherDataItemArray[i].fcstValue;
         }
     }
 
-    data.items = new Array(POPItem, PTYItem, SKYItem, T3HItem);
+    data.items = new Array(PTYItem, SKYItem, T1HItem);
     console.log("data : " + JSON.stringify(data));
 
     callback(data);
