@@ -330,7 +330,7 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
         GETuri += '&pageNo=1';
         GETuri += '&_type=json';
         var options = {
-            url: POSTuri,
+            url: GETuri,
             method: 'GET',
         }
         request(options, function(error, response, body) {
