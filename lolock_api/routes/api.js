@@ -371,10 +371,10 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
               console.log("response body : " + response.body);
               if (body.success == 1) {
                 console.log(roomateTokenArray[cnt] + "완료");
-                repeatPromise(cnt++);
+                repeatPromise(cnt+1);
               } else {
                 console.log(cnt + "실패");
-                repeatPromise(cnt++);
+                repeatPromise(cnt+1);
               }
             })
           }
