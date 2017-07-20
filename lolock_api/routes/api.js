@@ -341,6 +341,7 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
         weatherdataModifyRequiredData(body, function(weatherRequiredData) {
           //for (var i in roomateTokenArray) {
           var repeatPromise = function(cnt, callback){
+            console.log("cnt : " + cnt);
             if(cnt == roomateTokenArray.length){
               callback();
             }
@@ -362,12 +363,12 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             }else {
               toAppBody.to = roomateTokenArray[cnt];
             }
+            options.body = JSON.stringify(toAppBody);
             console.log("options.body : " + options.body + '\n');
             // TODO : 동기화 할 것 promise 사용
             request(options, function(error, response, body) {
               console.log("promise : " + cnt);
               console.log("response body : " + response.body);
-              console.log("body : " + body);
               if (body.success == 1) {
                 console.log(roomateTokenArray[cnt] + "완료");
                 repeatPromise(cnt++);
