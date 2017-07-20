@@ -337,37 +337,37 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
             if (!error && response.statusCode == 200) {
             // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
             weatherdataModifyRequiredData(body, function(weatherRequiredData) {
-              var headers = {
-                  'Content-Type': 'application/xml',
-                  'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
-              }
-              var options = {
-                  url: 'https://fcm.googleapis.com/fcm/send',
-                  method: 'POST',
-                  headers: headers
-              }
-              var toAppBody = {}; // push 메세지 body
               for (var i in roomateTokenArray) {
-                  toAppBody.data = weatherRequiredData;
-                  toAppBody.to = roomateTokenArray[i];
-                  options.body = JSON.stringify(toAppBody);
-                  console.log(toAppBody);
-                  // TODO : 동기화 할 것 promise 사용
-                  var _promise = new Promise(function(resolve, reject){
-                    request(options, function(error, response, body) {
-                      console.log("promise : " + i);
-                      console.log(response.body);
-                      if(response.body.success == 1){
-                        resolve(roomateTokenArray[i]  + "완료");
-                      }
-                      else {
-                        reject("실패");
-                      }
-                      }).then(function(text){
-                        console.log(text);
-                      }, function(text){
-                        console.log("err" + text);
-                      })
+                var headers = {
+                    'Content-Type': 'application/xml',
+                    'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
+                }
+                var options = {
+                    url: 'https://fcm.googleapis.com/fcm/send',
+                    method: 'POST',
+                    headers: headers
+                }
+                var toAppBody = {}; // push 메세지 body
+                toAppBody.data = weatherRequiredData;
+                toAppBody.to = roomateTokenArray[i];
+                options.body = JSON.stringify(toAppBody);
+                console.log(toAppBody);
+                // TODO : 동기화 할 것 promise 사용
+                var _promise = new Promise(function(resolve, reject){
+                  request(options, function(error, response, body) {
+                    console.log("promise : " + i);
+                    console.log(response.body);
+                    if(response.body.success == 1){
+                      resolve(roomateTokenArray[i]  + "완료");
+                    }
+                    else {
+                      reject("실패");
+                    }
+                    }).then(function(text){
+                      console.log(text);
+                    }, function(text){
+                      console.log("err" + text);
+                    })
                   })
                 }
             });
