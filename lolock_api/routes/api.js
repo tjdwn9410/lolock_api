@@ -355,7 +355,7 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
     }
     request(options, function(error, response, body) {
       if(flag === 1){
-        responseToReq.send(JSON.stringify(weatherdataModifyRequiredData(body, function(){
+        responseToReq.send(JSON.stringify(weatherdataModifyRequiredData(body, roomateTokenArray, function(){
           console.log("날씨 response 성공");
         })));
       }
