@@ -232,30 +232,41 @@ router.post('/loradata', function(req, res, next) {
         });
         */
 });
-
+router.get('/checkId/:deviceId', function(req, res, next) {
+    var deviceId = req.params.deviceId;
+    mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
+        .spread(function(rows) {
+            if (rows.length == 0) {
+                res.json({
+                    code: 'DEVICE_ID_ERR',
+                    message: '등록되지 않은 기기'
+                });
+            } else {
+                res.json({
+                    code: 'DEVICE_ID_AVAILABLE',
+                    message: '등록된 기기'
+                });
+            }
+        });
+});
 router.post('/register', function(req, res, next) {
     var jsonRes = req.body;
     var deviceId = "00000174d02544fffe" + jsonRes.registerLoraId;
     var userName = jsonRes.registerUserName;
     var userPhoneId = jsonRes.registerUserPhoneId;
     var userBluetoothId = jsonRes.registerUserBluetoothId;
-    var userGPS_lat = jsonRes.registerUserGPS_lat;
-    var userGPS_lon = jsonRes.registerUserGPS_lon;
+    var deviceGPS_lat = jsonRes.registerDeviceGPS_lat;
+    var deviceGPS_lon = jsonRes.registerDeviceGPS_lon;
     var getDeviceIdFromDB;
     var getUserIdFromDB;
     console.log(deviceId);
     console.log(userName);
+    mysql.query("UPDATE lolock_devices SET gps_lat=?,gps_lon=? WHERE gps_lat IS NULL", [deviceGPS_lat, deviceGPS_lon]);
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
         .spread(function(rows) {
-            if (rows[0] == null) {
-                res.json({
-                    code: 'DEVICE_ID_ERR',
-                    message: '등록되지 않은 기기'
-                });
-            } else {
-                getDeviceIdFromDB = rows[0].id;
-                return mysql.query("INSERT INTO lolock_users (name,phone_id,bluetooth_id,gps_lat,gps_lon) VALUES (?,?,?,?,?)", [userName, userPhoneId, userBluetoothId, userGPS_lat, userGPS_lon]);
-            }
+            getDeviceIdFromDB = rows[0].id;
+            return mysql.query("INSERT INTO lolock_users (name,phone_id,bluetooth_id) VALUES (?,?,?)", [userName, userPhoneId, userBluetoothId]);
+
         }).then(function() {
             console.log(userPhoneId);
             return mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [userPhoneId]);
@@ -344,7 +355,7 @@ router.get('/disposable-link/:linkId', function(req, res, next) {
             }
         })
         .then(function() {
-          sendControllMessage("1",device_id,res);
+            sendControllMessage("1", device_id, res);
         })
         .catch(function(err) {
             console.log(err);
