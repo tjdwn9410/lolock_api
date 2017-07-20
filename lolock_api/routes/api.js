@@ -362,7 +362,6 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             }else {
               toAppBody.to = roomateTokenArray[cnt];
             }
-            options.body = JSON.stringify(toAppBody);
             console.log("options.body : " + options.body + '\n');
             // TODO : 동기화 할 것 promise 사용
             request(options, function(error, response, body) {
@@ -378,7 +377,8 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
               }
             })
           }
-          repeatPromise(0, function(){
+          var cnt = 0;
+          repeatPromise(cnt, function(){
             console.log("보내기 끝");
           })
         })
