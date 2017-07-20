@@ -341,7 +341,7 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
         weatherdataModifyRequiredData(body, function(weatherRequiredData) {
           for (var i in roomateTokenArray) {
             var headers = {
-              'Content-Type': 'application/xml',
+              'Content-Type': 'application/json',
               'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
             }
             var options = {
