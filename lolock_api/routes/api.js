@@ -346,40 +346,14 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
               callback();
               return;
             }
-            var headers = {
-              'Content-Type': 'application/json',
-              'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
+            sendPushMessage(roomateTokenArray[cnt], weatherRequiredData)
+            .then(function(text){
+              console.log(text)
+              repeatPromise(cnt+1, callback);
+            }, function(err){
+              console.log(err)
+              repeatPromise(cnt+1, callback);
             }
-            var options = {
-              url: 'https://fcm.googleapis.com/fcm/send',
-              method: 'POST',
-              headers: headers
-            }
-            var toAppBody = {}; // push 메세지 body
-            toAppBody.data = weatherRequiredData;
-
-            // TODO : UPDATE 해야함
-            if(cnt === 0){
-              toAppBody.to = "cJIEdYvTNZs:APA91bHReTNw_365hONfbdX7miF0Ex28Gb6QBtL5P7PXQAeP0Fd8pGJ0hJJsOG-QrJJJbSgisrAH7QQGDUMku0nBoc4WfcAsXwheWwqqNKh_b6j8n2OvjtIJXr5R_2hKPMZUS-g-F77k";
-            }else {
-              toAppBody.to = roomateTokenArray[cnt];
-            }
-            options.body = JSON.stringify(toAppBody);
-            console.log("options.body : " + options.body + '\n');
-            // TODO : 동기화 할 것 promise 사용
-            request(options, function(error, response, body) {
-              var bodyobj = eval("(" + response.body + ")");
-              console.log("promise : " + cnt);
-              console.log("response body : " + bodyobj);
-              console.log("response body success : " + bodyobj.success);
-              if (bodyobj.success === 1) {
-                console.log(roomateTokenArray[cnt] + "완료");
-                repeatPromise(cnt+1, callback);
-              } else {
-                console.log(cnt + "실패");
-                repeatPromise(cnt+1, callback);
-              }
-            })
           }
           var cnt = 0;
           repeatPromise(cnt, function(){
@@ -390,6 +364,34 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
     });
   })
 };
+
+var sendPushMessage(androidToken, dataObj) = new Promise(function(resolve, reject){
+  // TODO
+  var headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
+  }
+  var options = {
+    url: 'https://fcm.googleapis.com/fcm/send',
+    method: 'POST',
+    headers: headers
+  }
+  var toAppBody = {}; // push 메세지 body
+  toAppBody.data = dataObj;
+  toAppBody.to = androidToken;
+  options.body = JSON.stringify(toAppBody);
+  // TODO : 동기화 할 것 promise 사용
+  request(options, function(error, response, body) {
+    console.log(response.body);
+    var bodyobj = eval("(" + response.body + ")");
+    // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
+    if (bodyobj.success === 1) {
+      resolve(androidToken + "보내기 완료");
+    } else {
+      reject(androidToken + "실패!!!");
+    }
+  })
+})
 
 var weatherdataModifyRequiredData = function(weatherData, callback) {
   var PTYItem = {}; // 강수 형태  / 0 : 없음 / 1 : 비 / 2: 비/눈 / 3 : 눈
