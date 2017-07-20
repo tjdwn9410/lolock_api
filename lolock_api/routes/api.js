@@ -339,9 +339,7 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
       if (!error && response.statusCode == 200) {
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
         weatherdataModifyRequiredData(body, function(weatherRequiredData) {
-          var check = false;
-          for (var i = 0; i < roomateTokenArray.length;) {
-            check = false;
+          for (var i in roomateTokenArray) {
             var headers = {
               'Content-Type': 'application/json',
               'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
@@ -373,12 +371,9 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
               })
             }).then(function(text) {
               console.log(text);
-              i++; check = true;
             }, function(text) {
               console.log("err" + text);
-              i++; check = true;
             })
-            while(!check) {console.log("delay");}
           }
         })
       }
