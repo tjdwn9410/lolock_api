@@ -371,6 +371,9 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
               console.log("promise : " + cnt);
               console.log("response body : " + response.body);
               console.log("response.body.success : " + response.body.success);
+              console.log("response.body.multicast_id : " + response.body.multicast_id);
+              console.log("response.body.failure : " + response.body.failure);
+              console.log("response.body.success s : " + JSON.stringify(response.body.success));
               if (response.body.success === 1) {
                 console.log(roomateTokenArray[cnt] + "완료");
                 repeatPromise(cnt+1, callback);
