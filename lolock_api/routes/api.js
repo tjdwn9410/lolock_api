@@ -392,8 +392,8 @@ var weatherdataModifyRequiredData = function(weatherData, callback) {
             SKYItem.category = weatherDataItemArray[i].category;
             SKYItem.fcstValue = weatherDataItemArray[i].fcstValue;
         } else if (weatherDataItemArray[i].category === "T1H") {
-            T3HItem.category = weatherDataItemArray[i].category;
-            T3HItem.fcstValue = weatherDataItemArray[i].fcstValue;
+            T1HItem.category = weatherDataItemArray[i].category;
+            T1HItem.fcstValue = weatherDataItemArray[i].fcstValue;
         }
     }
 
