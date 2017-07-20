@@ -361,10 +361,10 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
                 weatherdataModifyRequiredData(body, function(weatherRequiredData) {
                     var toAppBody = {}; // push 메세지 body
                     for (var i in roomateTokenArray) {
-                        toAppBody.data = JSON.stringify(weatherRequiredData);
+                        toAppBody.data = weatherRequiredData;
                         toAppBody.to = roomateTokenArray[i];
                         options.body = JSON.stringify(toAppBody);
-
+                        // TODO : 동기화 할 것 promise 사용
                         request(options, function(error, response, body) {
                             console.log(roomateTokenArray[i] + "finish");
                             console.log("Send to App : " + JSON.stringify(response));
