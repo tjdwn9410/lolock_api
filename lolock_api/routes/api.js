@@ -339,7 +339,11 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
       if (!error && response.statusCode == 200) {
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
         weatherdataModifyRequiredData(body, function(weatherRequiredData) {
-          for (var i in roomateTokenArray) {
+          //for (var i in roomateTokenArray) {
+          var repeatPromise = function(cnt, callback){
+            if(cnt == roomateTokenArray.length){
+              callback();
+            }
             var headers = {
               'Content-Type': 'application/json',
               'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
@@ -351,30 +355,32 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             }
             var toAppBody = {}; // push 메세지 body
             toAppBody.data = weatherRequiredData;
-            toAppBody.to = roomateTokenArray[i];
+
+            // TODO : UPDATE 해야함
             if(i === 2){
               toAppBody.to = "cJIEdYvTNZs:APA91bHReTNw_365hONfbdX7miF0Ex28Gb6QBtL5P7PXQAeP0Fd8pGJ0hJJsOG-QrJJJbSgisrAH7QQGDUMku0nBoc4WfcAsXwheWwqqNKh_b6j8n2OvjtIJXr5R_2hKPMZUS-g-F77k";
+            }else {
+              toAppBody.to = roomateTokenArray[cnt];
             }
             options.body = JSON.stringify(toAppBody);
             console.log("options.body : " + options.body + '\n');
             // TODO : 동기화 할 것 promise 사용
-            var _promise = new Promise(function(resolve, reject) {
-              request(options, function(error, response, body) {
-                console.log("promise : " + i);
-                console.log("response body : " + response.body);
-                console.log("body : " + body);
-                if (body.success == 1) {
-                  resolve(roomateTokenArray[i] + "완료");
-                } else {
-                  reject(i + "실패");
-                }
-              })
-            }).then(function(text) {
-              console.log(text);
-            }, function(text) {
-              console.log("err" + text);
+            request(options, function(error, response, body) {
+              console.log("promise : " + cnt);
+              console.log("response body : " + response.body);
+              console.log("body : " + body);
+              if (body.success == 1) {
+                console.log(roomateTokenArray[cnt] + "완료");
+                repeatPromise(cnt++);
+              } else {
+                console.log(i + "실패");
+                repeatPromise(cnt++);
+              }
             })
           }
+          repeatPromise(0, function(){
+            console.log("보내기 끝");
+          })
         })
       }
     });
