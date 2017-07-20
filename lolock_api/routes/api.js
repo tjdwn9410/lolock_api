@@ -233,7 +233,7 @@ router.post('/loradata', function(req, res, next) {
         */
 });
 router.get('/checkId/:deviceId', function(req, res, next) {
-    var deviceId = req.params.deviceId;
+    var deviceId = "00000174d02544fffe" + req.params.deviceId;
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
         .spread(function(rows) {
             if (rows.length == 0) {
