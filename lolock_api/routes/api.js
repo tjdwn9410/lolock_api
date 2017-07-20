@@ -292,6 +292,69 @@ router.post('/register', function(req, res, next) {
         });
 });
 
+router.get('/open-url/:phoneId', function(req, res, next) {
+    var phoneId = req.params.phoneId;
+    var randomStr;
+    mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
+        .spread(function(rows) {
+            console.log(rows);
+            return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
+        })
+        .spread(function(rows) {
+            console.log(rows);
+            return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
+
+        })
+        .spread(function(rows) {
+            console.log(rows);
+            console.log();
+            randomStr = Math.random().toString(36).substring(7);
+            return mysql.query("INSERT INTO lolock_open_url (device_id,url) VALUES(?,?)", [rows[0].device_id, randomStr]);
+        })
+        .then(function() {
+            var jsonRes = {
+                "link": "13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
+            }
+            res.json(jsonRes);
+        })
+        .catch(function(err) {
+            console.log(err);
+            res.status(500);
+            res.json({
+                code: 'DB_ERR',
+                message: '데이터베이스 에러'
+            });
+        });
+});
+
+router.get('/disposable-link/:linkId', function(req, res, next) {
+    var linkId = req.params.linkId;
+    var device_id;
+    mysql.query("SELECT * FROM lolock_open_url WHERE url = ?", [linkId])
+        .spread(function(rows) {
+            console.log(rows.length);
+            if (rows.length == 0) {
+                res.json({
+                    code: 'UNDEFINED',
+                    message: '존재하지 않는 주소'
+                });
+            } else {
+                device_id = rows[0].device_id;
+                return mysql.query("DELETE FROM lolock_open_url WHERE url = ?", [linkId]);
+            }
+        })
+        .then(function() {
+          sendControllMessage("1",device_id,res);
+        })
+        .catch(function(err) {
+            console.log(err);
+            res.status(500);
+            res.json({
+                code: 'DB_ERR',
+                message: '데이터베이스 에러'
+            });
+        });;
+});
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
 // 경도       위도    날짜+시간
 var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModifiedTime) {
