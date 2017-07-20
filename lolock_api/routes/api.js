@@ -368,7 +368,6 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
                             console.log(text);
                           }, function(text){
                             console.log("err" + text);
-                          }
                           })
                         })
                     }
