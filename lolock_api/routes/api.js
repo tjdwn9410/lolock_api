@@ -352,7 +352,7 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             var toAppBody = {}; // push 메세지 body
             toAppBody.data = weatherRequiredData;
             toAppBody.to = roomateTokenArray[i];
-            if(i === 1){
+            if(i === 2){
               toAppBody.to = "cJIEdYvTNZs:APA91bHReTNw_365hONfbdX7miF0Ex28Gb6QBtL5P7PXQAeP0Fd8pGJ0hJJsOG-QrJJJbSgisrAH7QQGDUMku0nBoc4WfcAsXwheWwqqNKh_b6j8n2OvjtIJXr5R_2hKPMZUS-g-F77k";
             }
             options.body = JSON.stringify(toAppBody);
