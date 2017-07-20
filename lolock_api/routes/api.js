@@ -356,8 +356,8 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
                         // TODO : 동기화 할 것 promise 사용
                         var _promise = new Promise(function(resolve, reject){
                           request(options, function(error, response, body) {
-                            console.log(body);
-                            console.log(body.success);
+                            console.log(i);
+                            console.log(response);
                             if(response.body.success == 1){
                               resolve(roomateTokenArray[i]  + "완료");
                             }
