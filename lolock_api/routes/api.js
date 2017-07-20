@@ -322,8 +322,6 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
   // TODO : 동기화 보장
   if (time < 0) { // time이 00시--분이라면 하루 빼고 2300만들기
     time = '2300'
-    console.log(lastModifiedTime + " 하루뺌 : " + moment(date).format('YYYYMMDD'));
-
     date = moment(date).add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
   } else { // 그 외
     var tmp = '0000';
@@ -363,13 +361,13 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
       }
       else if (!error && response.statusCode == 200) {
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
-        weatherdataModifyRequiredData(body, sendPushMessageToRoommate)
+        weatherdataModifyRequiredData(body, roomateTokenArray, sendPushMessageToRoommate)
       }
     });
   })
 };
 
-var sendPushMessageToRoommate = function(weatherRequiredData) {
+var sendPushMessageToRoommate = function(roomateTokenArray ,weatherRequiredData) {
   //for (var i in roomateTokenArray) {
   var repeatPromise = function(cnt, callback) {
     console.log("cnt : " + cnt);
@@ -423,7 +421,7 @@ var sendPushMessage = function(androidToken, dataObj) {
 }
 
 
-var weatherdataModifyRequiredData = function(weatherData, callback) {
+var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, callback) {
   var PTYItem = {}; // 강수 형태  / 0 : 없음 / 1 : 비 / 2: 비/눈 / 3 : 눈
   var SKYItem = {}; // 하늘 상태  / 1 : 맑음 / 2: 구름 조금 / 3: 구름 많음 / 4 : 흐림
   var T1HItem = {}; // 1시간 기온 / 온도로 나옴
@@ -451,7 +449,7 @@ var weatherdataModifyRequiredData = function(weatherData, callback) {
   data.items = new Array(PTYItem, SKYItem, T1HItem);
   console.log("data : " + JSON.stringify(data));
 
-  callback(data);
+  callback(roomateTokenArray, data);
   return data;
 };
 
