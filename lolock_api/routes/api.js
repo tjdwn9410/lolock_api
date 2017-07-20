@@ -331,7 +331,8 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
     tmp += time;
     time = tmp;
   }
-
+  console.log("date : " + date);
+  console.log("time : " + time);
   child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr) {
     if (error !== null) {
       console.log('exec error: ' + error);
