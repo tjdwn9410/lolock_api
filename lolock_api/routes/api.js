@@ -370,6 +370,7 @@ child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout
             request(options, function(error, response, body) {
               console.log("promise : " + cnt);
               console.log("response body : " + response.body);
+              console.log("response.body.success : " + response.body.success);
               if (response.body.success === 1) {
                 console.log(roomateTokenArray[cnt] + "완료");
                 repeatPromise(cnt+1, callback);
