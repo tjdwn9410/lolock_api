@@ -92,6 +92,42 @@ router.get('/userids/:user_id/passwords/:passwd', function(req, res, next) {
     });
 })
 
+router.get('/userInfo/:phoneId', function(req, res, next) {
+    var userPhoneId = req.params.phoneId;
+    var userName;
+    mysql.query("SELECT * FROM lolock_users WHERE phone_id=?", [userPhoneId])
+        .spread(function(rows) {
+            console.log(rows.length);
+            if (rows.length == 0) {
+                res.json({
+                    code: 'NOT REGISTRED',
+                    message: '미등록 핸드폰'
+                });
+            } else {
+                userName = rows[0].name;
+                mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ?", [rows[0].id])
+                .spread(function(rows) {
+                    console.log(rows.length);
+                    if (rows.length != 0) {
+                        return mysql.query("SELECT * FROM lolock_devices WHERE id = ?", [rows[0].device_id]);
+                    }
+                })
+                .spread(function(rows) {
+                    console.log(rows.length);
+                    if (rows.length != 0) {
+                        res.json({
+                            code: 'REGISTRED',
+                            userInfo: {
+                                name: userName,
+                                lolockLTID: rows[0].device_id
+                            }
+                        })
+                    }
+                });
+            }
+        });
+});
+
 
 /* GET housemate list and response to app */
 router.get('/homemateslist/:LTID', function(req, res, next) {
