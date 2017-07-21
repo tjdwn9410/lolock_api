@@ -389,7 +389,7 @@ var sendPushMessageToRoommate = function(roomateTokenArray ,weatherRequiredData)
     console.log("보내기 끝");
   })
 }
-
+// TODO : data에 인덱스를 달아서 얘가 기상정보 push인지 누가 들어와서 로그를 남기는건지 알려줘야함
 var sendPushMessage = function(androidToken, dataObj) {
   return new Promise(function(resolve, reject) {
     // TODO
