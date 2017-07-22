@@ -378,10 +378,9 @@ router.get('/open-url/:phoneId', function(req, res, next) {
             return mysql.query("INSERT INTO lolock_open_url (device_id,url) VALUES(?,?)", [rows[0].device_id, randomStr]);
         })
         .then(function() {
-            var jsonRes = {
+            res.json({
                 link: "13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
-            }
-            res.json(jsonRes);
+            });
         })
         .catch(function(err) {
             console.log(err);
