@@ -244,6 +244,12 @@ router.post('/loradata', function(req, res, next) {
   console.log(content, lastModifiedTime); // content 2017-07-16T21:35:14+09:00
   console.log(LTID);
   console.log('\n');
+
+  console.log("typeof content : " + typeof content);
+  console.log(content[0]);
+  console.log(content[1]);
+  console.log(content[2]);
+  console.log(content[3]);
   mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
     .spread(function(rows) {
       console.log(rows[0].id);
