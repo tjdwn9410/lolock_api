@@ -305,7 +305,7 @@ router.post('/register', function(req, res, next) {
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
         .spread(function(rows) {
             getDeviceIdFromDB = rows[0].id;
-            return mysql.query("INSERT INTO lolock_users (name,phone_id,bluetooth_id) VALUES (?,?,?)", [userName, userPhoneId, userBluetoothId]);
+            return mysql.query("INSERT INTO lolock_users (name,phone_id) VALUES (?,?)", [userName, userPhoneId]);
 
         }).then(function() {
             console.log(userPhoneId);
