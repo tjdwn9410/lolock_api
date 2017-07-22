@@ -313,9 +313,9 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
       console.log(rows[0].id);
       gps_lat = rows[0].gps_lat;
       gps_lon = rows[0].gps_lon;
-      mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id, gps_lon, gps_lat);
+      mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
     })
-    .spread(function(roomateRows, gps_lon, gps_lat) {
+    .spread(function(roomateRows) {
       var roomateTokenArray = new Array();
       for (var j in roomateRows) {
         roomateTokenArray.push(roomateRows[j].phone_id);
