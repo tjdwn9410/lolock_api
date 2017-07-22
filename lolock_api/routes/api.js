@@ -362,7 +362,7 @@ router.post('/register', function(req, res, next) {
 
 /* GET  */
 router.get('/weatherdata/:LTID', function(req, res, next) {
-    var LTID = "00000174d02544fffe" + req.params.LTID;
+    var LTID = req.params.LTID;
     var gps_lat;
     var gps_lon;
     console.log(LTID);
