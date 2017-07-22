@@ -198,16 +198,19 @@ router.post('/loradata', function(req, res, next) {
   var lastModifiedTime = notificationMessage.lt[0]; // Thingplug에 전송된 시간
   var uri = notificationMessage.sr[0].split('/');
   var LTID = uri[3].substring(10);
+  var gps_lat;
+  var gps_lon;
 
   console.log(content, lastModifiedTime); // content 2017-07-16T21:35:14+09:00
   console.log(LTID);
   console.log('\n');
 
-
-  mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", LTID)
+  mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
     .spread(function(rows) {
       console.log(rows[0].id);
-      return mysql.query("SELECT phone_id, gps_lat, gps_lon FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
+      gps_lat = rows[0].gps_lat;
+      gps_lon = rows[0].gps_lon;
+      return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
     })
     .spread(function(roomateRows) {
       // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
@@ -215,7 +218,7 @@ router.post('/loradata', function(req, res, next) {
       for (var j in roomateRows) {
         roomateTokenArray.push(roomateRows[j].phone_id);
       }
-      receiveWeatherInfo(roomateTokenArray, roomateRows[0].gps_lon, roomateRows[0].gps_lat, lastModifiedTime, 0);
+      receiveWeatherInfo(roomateTokenArray, gps_lon, gps_lat, lastModifiedTime, 0);
     })
   /* 위 테스트 중 DB 접근하면 안됌
 
@@ -305,7 +308,7 @@ router.post('/register', function(req, res, next) {
 
 /* GET  */
 router.get('/weatherdata/:LTID', function(req, res, next) {
-  var LTID = req.params.LTID;
+  var LTID = "00000174d02544fffe" + req.params.LTID;
   var gps_lat;
   var gps_lon;
   mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
@@ -430,15 +433,29 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
       url: GETuri,
       method: 'GET',
     }
+    var GETforecasturi = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
+    GETforecasturi += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
+    GETforecasturi += '&base_date=' + date;
+    GETforecasturi += '&base_time=0200';
+    GETforecasturi += '&nx=' + nx;
+    GETforecasturi += '&ny=' + ny;
+    GETforecasturi += '&numOfRows=62';
+    GETforecasturi += '&pageNo=1';
+    GETforecasturi += '&_type=json';
+    var forecastoptions = {
+      url: GETforecasturi,
+      method: 'GET',
+    }
     request(options, function(error, response, body) {
       if(flag === 1){
-        responseToReq.send(JSON.stringify(weatherdataModifyRequiredData(body, roomateTokenArray, function(){
+        weatherdataModifyRequiredData(body, roomateTokenArray, forecastoptions, 1, function(data){
+          responseToReq.send(JSON.stringify(data));
           console.log("날씨 response 성공");
         })));
       }
       else if (!error && response.statusCode == 200) {
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
-        weatherdataModifyRequiredData(body, roomateTokenArray, sendPushMessageToRoommate)
+        weatherdataModifyRequiredData(body, roomateTokenArray, forecastoptions, 0, sendPushMessageToRoommate)
       }
     });
   })
@@ -498,12 +515,13 @@ var sendPushMessage = function(androidToken, dataObj) {
 }
 
 
-var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, callback) {
+var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, forecastoptions, flag, callback) {
   var PTYItem = {}; // 강수 형태  / 0 : 없음 / 1 : 비 / 2: 비/눈 / 3 : 눈
   var SKYItem = {}; // 하늘 상태  / 1 : 맑음 / 2: 구름 조금 / 3: 구름 많음 / 4 : 흐림
   var T1HItem = {}; // 1시간 기온 / 온도로 나옴
+  var time = moment().format().split('T').split(':')[0];
+  time += "00";
 
-  console.log(weatherData);
   var weatherDataobj = eval("(" + weatherData + ")");
   var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
   var data = new Object();
@@ -512,22 +530,50 @@ var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, cal
 
   for (var i in weatherDataItemArray) {
     if (weatherDataItemArray[i].category === "PTY") {
-      PTYItem.category = weatherDataItemArray[i].category;
-      PTYItem.obsrValue = weatherDataItemArray[i].obsrValue;
+      data.강수형태 = weatherDataItemArray[i].obsrValue;
     } else if (weatherDataItemArray[i].category === "SKY") {
-      SKYItem.category = weatherDataItemArray[i].category;
-      SKYItem.obsrValue = weatherDataItemArray[i].obsrValue;
+      data.하늘상태 = weatherDataItemArray[i].obsrValue;
     } else if (weatherDataItemArray[i].category === "T1H") {
-      T1HItem.category = weatherDataItemArray[i].category;
-      T1HItem.obsrValue = weatherDataItemArray[i].obsrValue;
+      data.실시간온도 = weatherDataItemArray[i].obsrValue;
     }
   }
+  if(data.강수형태 == 0){
+    if(data.하늘상태 == 1)
+      data.하늘상태 = "맑음";
+    else if(data.하늘상태 == 2)
+      data.하늘상태 = "구름조금"
+    else if(data.하늘상태 == 3)
+      data.하늘상태 = "구름많음"
+    else if(data.하늘상태 == 4)
+      data.하늘상태 = "흐림"
+  }
+  else if(data.강수형태 == 1)
+    data.하늘상태 = "비";
+  else if(data.강수형태 == 2)
+    data.하늘상태 = "비와눈";
+  else if(data.강수형태 == 3)
+    data.하늘상태 = "눈";
+  delete data.강수형태;
 
-  data.items = new Array(PTYItem, SKYItem, T1HItem);
-  console.log("data : " + JSON.stringify(data));
-
-  callback(roomateTokenArray, data);
-  return data;
+  request(forecastoptions, function(error, response, body) {
+    var weatherDataobj = eval("(" + body + ")");
+    var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
+    for (var i in weatherDataItemArray) {
+      if (weatherDataItemArray[i].category === "TMN") {
+        data.최저기온 = weatherDataItemArray[i].fcstValue;
+      } else if (weatherDataItemArray[i].category === "TMX") {
+        data.최고기온 = weatherDataItemArray[i].fcstValue;
+      }
+      if(weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstTime) < Number(time))
+        data.비올확률 = weatherDataItemArray[i].fcstValue;
+    }
+    console.log("data : " + JSON.stringify(data));
+    if(flag === 0)
+      callback(roomateTokenArray, data);
+    else if(flag === 1){
+      callback(data);
+    }
+  });
 };
 
 module.exports = router;
