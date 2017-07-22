@@ -379,7 +379,8 @@ router.get('/open-url/:phoneId', function(req, res, next) {
         })
         .then(function() {
             res.json({
-                link: "13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
+                code : 'CREATED',
+                link : "13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
             });
         })
         .catch(function(err) {
