@@ -291,7 +291,7 @@ router.get('/checkId/:deviceId', function(req, res, next) {
 });
 router.post('/register', function(req, res, next) {
     var jsonRes = req.body;
-    var deviceId = "00000174d02544fffe" + jsonRes.registerLoraId;
+    var deviceId = "00000174d02544fffe" + jsonRes.registerDeviceId;
     var userName = jsonRes.registerUserName;
     var userPhoneId = jsonRes.registerUserPhoneId;
     var deviceGPS_lat = jsonRes.registerDeviceGPS_lat;
