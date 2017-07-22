@@ -123,7 +123,7 @@ router.get('/userInfo/:phoneId', function(req, res, next) {
                                 messaege: "등록된 핸드폰",
                                 userInfo: {
                                     name: userName,
-                                    lolockLTID: rows[0].device_id.substring(rows[0].device_id.length-6,rows[0].device_id.length)
+                                    lolockLTID: rows[0].device_id.substring(rows[0].device_id.length - 6, rows[0].device_id.length)
                                 }
                             })
                         }
@@ -136,7 +136,7 @@ router.get('/userInfo/:phoneId', function(req, res, next) {
 /* GET housemate list and response to app */
 router.get('/homemateslist/:LTID', function(req, res, next) {
     console.log(JSON.stringify(req.headers.ltid)); // "Headers 의 LTID 키를 가져옴"
-    var LoLockId ="00000174d02544fffe"+ req.params.LTID;
+    var LoLockId = "00000174d02544fffe" + req.params.LTID;
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [LoLockId])
         .spread(function(rows) {
             if (rows[0] == null) {
@@ -362,7 +362,7 @@ router.post('/register', function(req, res, next) {
 
 /* GET  */
 router.get('/weatherdata/:LTID', function(req, res, next) {
-    var LTID = "00000174d02544fffe"+ req.params.LTID;
+    var LTID = "00000174d02544fffe" + req.params.LTID;
     var gps_lat;
     var gps_lon;
     console.log(LTID);
@@ -379,7 +379,7 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
             for (var j in roomateRows) {
                 roomateTokenArray.push(roomateRows[j].phone_id);
             }
-            receiveWeatherInfo(roomateTokenArray, gps_lon, gps_lat, moment().format('YYYY-MM-DDTHH:mm:ssZ'), 1, res);
+            (roomateTokenArray, gps_lon, gps_lat, moment().format('YYYY-MM-DDTHH:mm:ssZ'), 1, res);
         })
 })
 
@@ -466,29 +466,39 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
         tmp += time;
         time = tmp;
     }
-    var GETforecasturi = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
-    GETforecasturi += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
-    GETforecasturi += '&base_date=' + date;
-    GETforecasturi += '&base_time=0200';
-    GETforecasturi += '&nx=' + nx;
-    GETforecasturi += '&ny=' + ny;
-    GETforecasturi += '&numOfRows=62';
-    GETforecasturi += '&pageNo=1';
-    GETforecasturi += '&_type=json';
-    var forecastoptions = {
-        url: GETforecasturi,
-        method: 'GET',
-    }
-    request(options, function(error, response, body) {
-        if (flag === 1) {
-            weatherdataModifyRequiredData(body, roomateTokenArray, forecastoptions, 1, function(data) {
-                responseToReq.send(JSON.stringify(data));
-                console.log("날씨 response 성공");
-            });
-        } else if (!error && response.statusCode == 200) {
-            // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
-            weatherdataModifyRequiredData(body, roomateTokenArray, forecastoptions, 0, sendPushMessageToRoommate)
+    console.log("date : " + date);
+    console.log("time : " + time);
+    child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr) {
+        if (error !== null) {
+            console.log('exec error: ' + error);
         }
+        var nx = stdout.split(' = ')[1].split(',')[0]; // '62, Y'
+        var ny = stdout.split(' = ')[2].split('\n')[0];
+        console.log("nx : " + nx + " ny : " + ny);
+
+        var GETuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastGrib?';
+        GETuri += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
+        GETuri += '&base_date=' + date;
+        GETuri += '&base_time=' + time;
+        GETuri += '&nx=' + nx;
+        GETuri += '&ny=' + ny;
+        GETuri += '&numOfRows=15';
+        GETuri += '&pageNo=1';
+        GETuri += '&_type=json';
+        var options = {
+            url: GETuri,
+            method: 'GET',
+        }
+        request(options, function(error, response, body) {
+            if (flag === 1) {
+                responseToReq.send(JSON.stringify(weatherdataModifyRequiredData(body, roomateTokenArray, function() {
+                    console.log("날씨 response 성공");
+                })));
+            } else if (!error && response.statusCode == 200) {
+                // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
+                weatherdataModifyRequiredData(body, roomateTokenArray, sendPushMessageToRoommate)
+            }
+        });
     });
 };
 
