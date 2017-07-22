@@ -449,59 +449,73 @@ router.get('/disposable-link/:linkId', function(req, res, next) {
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
 // 경도       위도    날짜+시간
 var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModifiedTime, flag, responseToReq) {
-    var dateArr = lastModifiedTime.split('T')[0].split('-');
-    var timeArr = lastModifiedTime.split('T')[1].split(':');
-    var date = dateArr[0] + dateArr[1] + dateArr[2];
-    var time = Number(timeArr[0] + timeArr[1]);
-    time = time - (time % 100) - 100;
+  var dateArr = lastModifiedTime.split('T')[0].split('-');
+  var timeArr = lastModifiedTime.split('T')[1].split(':');
+  var date = dateArr[0] + dateArr[1] + dateArr[2];
+  var time = Number(timeArr[0] + timeArr[1]);
+  time = time - (time % 100) - 100;
 
-    // TODO : 동기화 보장
-    if (time < 0) { // time이 00시--분이라면 하루 빼고 2300만들기
-        time = '2300'
-        date = moment(date).add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
-    } else { // 그 외
-        var tmp = '0000';
-        time += "";
-        tmp = tmp.substring(time.length);
-        tmp += time;
-        time = tmp;
+  // TODO : 동기화 보장
+  if (time < 0) { // time이 00시--분이라면 하루 빼고 2300만들기
+    time = '2300'
+    date = moment(date).add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
+  } else { // 그 외
+    var tmp = '0000';
+    time += "";
+    tmp = tmp.substring(time.length);
+    tmp += time;
+    time = tmp;
+  }
+  console.log("date : " + date);
+  console.log("time : " + time);
+  child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr) {
+    if (error !== null) {
+      console.log('exec error: ' + error);
     }
-    console.log("date : " + date);
-    console.log("time : " + time);
-    child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr) {
-        if (error !== null) {
-            console.log('exec error: ' + error);
-        }
-        var nx = stdout.split(' = ')[1].split(',')[0]; // '62, Y'
-        var ny = stdout.split(' = ')[2].split('\n')[0];
-        console.log("nx : " + nx + " ny : " + ny);
+    var nx = stdout.split(' = ')[1].split(',')[0]; // '62, Y'
+    var ny = stdout.split(' = ')[2].split('\n')[0];
+    console.log("nx : " + nx + " ny : " + ny);
 
-        var GETuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastGrib?';
-        GETuri += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
-        GETuri += '&base_date=' + date;
-        GETuri += '&base_time=' + time;
-        GETuri += '&nx=' + nx;
-        GETuri += '&ny=' + ny;
-        GETuri += '&numOfRows=15';
-        GETuri += '&pageNo=1';
-        GETuri += '&_type=json';
-        var options = {
-            url: GETuri,
-            method: 'GET',
-        }
-        request(options, function(error, response, body) {
-            if (flag === 1) {
-                responseToReq.send(JSON.stringify(weatherdataModifyRequiredData(body, roomateTokenArray, function() {
-                    console.log("날씨 response 성공");
-                })));
-            } else if (!error && response.statusCode == 200) {
-                // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
-                weatherdataModifyRequiredData(body, roomateTokenArray, sendPushMessageToRoommate)
-            }
+    var GETuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastGrib?';
+    GETuri += 'ServiceKey=Wl56iXQ3MjJdi%2FO2u34%2BThhi%2F6QDsxA68HvdZ8pZOSo9DlFlvunKzxO1IGUwB6jsSIuDIp8DGEHzvAnoNdgFCQ%3D%3D';
+    GETuri += '&base_date=' + date;
+    GETuri += '&base_time=' + time;
+    GETuri += '&nx=' + nx;
+    GETuri += '&ny=' + ny;
+    GETuri += '&numOfRows=15';
+    GETuri += '&pageNo=1';
+    GETuri += '&_type=json';
+    var options = {
+      url: GETuri,
+      method: 'GET',
+    }
+    var GETforecasturi = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
+    GETforecasturi += 'ServiceKey=Wl56iXQ3MjJdi%2FO2u34%2BThhi%2F6QDsxA68HvdZ8pZOSo9DlFlvunKzxO1IGUwB6jsSIuDIp8DGEHzvAnoNdgFCQ%3D%3D';
+    GETforecasturi += '&base_date=' + date;
+    GETforecasturi += '&base_time=0200';
+    GETforecasturi += '&nx=' + nx;
+    GETforecasturi += '&ny=' + ny;
+    GETforecasturi += '&numOfRows=62';
+    GETforecasturi += '&pageNo=1';
+    GETforecasturi += '&_type=json';
+    var forecastoptions = {
+      url: GETforecasturi,
+      method: 'GET',
+    }
+    request(options, function(error, response, body) {
+      if(flag === 1 && response.statusCode == 200){
+        weatherdataModifyRequiredData(body, roomateTokenArray, forecastoptions, 1, function(data){
+          responseToReq.send(JSON.stringify(data));
+          console.log("날씨 response 성공");
         });
+      }
+      else if (flag === 0 && !error && response.statusCode == 200) {
+        // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
+        weatherdataModifyRequiredData(body, roomateTokenArray, forecastoptions, 0, sendPushMessageToRoommate)
+      }
     });
+  })
 };
-
 var sendPushMessageToRoommate = function(roomateTokenArray, weatherRequiredData) {
     //for (var i in roomateTokenArray) {
     var repeatPromise = function(cnt, callback) {
