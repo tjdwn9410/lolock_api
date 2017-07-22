@@ -558,7 +558,7 @@ var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, for
   delete data.pty;
 
   request(forecastoptions, function(error, response, body) {
-    if(response.response.statusCode == 200){
+    if(response.statusCode == 200){
       var weatherDataobj = eval("(" + body + ")");
       var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
       for (var i in weatherDataItemArray) {
