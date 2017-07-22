@@ -374,7 +374,7 @@ router.get('/open-url/:phoneId', function(req, res, next) {
         .spread(function(rows) {
             console.log(rows);
             console.log();
-            randomStr = Math.random().toString(36).substring(7);
+            randomStr = Math.random().toString(36).substring(20);
             return mysql.query("INSERT INTO lolock_open_url (device_id,url) VALUES(?,?)", [rows[0].device_id, randomStr]);
         })
         .then(function() {
