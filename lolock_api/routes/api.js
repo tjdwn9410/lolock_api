@@ -379,7 +379,7 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
             for (var j in roomateRows) {
                 roomateTokenArray.push(roomateRows[j].phone_id);
             }
-            (roomateTokenArray, gps_lon, gps_lat, moment().format('YYYY-MM-DDTHH:mm:ssZ'), 1, res);
+            receiveWeatherInfo(roomateTokenArray, gps_lon, gps_lat, moment().format('YYYY-MM-DDTHH:mm:ssZ'), 1, res);
         })
 })
 
