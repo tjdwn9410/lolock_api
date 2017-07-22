@@ -293,53 +293,54 @@ router.get('/checkId/:deviceId', function(req, res, next) {
         });
 });
 router.post('/register', function(req, res, next) {
-    var jsonRes = req.body;
-    var deviceId = "00000174d02544fffe" + jsonRes.registerLoraId;
-    var userName = jsonRes.registerUserName;
-    var userPhoneId = jsonRes.registerUserPhoneId;
-    var userBluetoothId = jsonRes.registerUserBluetoothId;
-    var deviceGPS_lat = jsonRes.registerDeviceGPS_lat;
-    var deviceGPS_lon = jsonRes.registerDeviceGPS_lon;
-    var getDeviceIdFromDB;
-    var getUserIdFromDB;
-    console.log(deviceId);
-    console.log(userName);
-    mysql.query("UPDATE lolock_devices SET gps_lat=?,gps_lon=? WHERE gps_lat IS NULL", [deviceGPS_lat, deviceGPS_lon]);
-    mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
-        .spread(function(rows) {
-            getDeviceIdFromDB = rows[0].id;
-            console.log(getDeviceIdFromDB);
-            return mysql.query("INSERT INTO lolock_users (name,phone_id) VALUES (?,?)", [userName, userPhoneId]);
+  var jsonRes = req.body;
+  console.log(jsonRes);
+  var deviceId = "00000174d02544fffe" + jsonRes.registerDeviceId;
+  var userName = jsonRes.registerUserName;
+  var userPhoneId = jsonRes.registerUserPhoneId;
+  var deviceGPS_lat = jsonRes.registerDeviceGPS_lat;
+  var deviceGPS_lon = jsonRes.registerDeviceGPS_lon;
+  var deviceAddr = jsonRes.registerDeviceAddr;
+  var getDeviceIdFromDB;
+  var getUserIdFromDB;
+  console.log(deviceId);
+  console.log(userName);
+  mysql.query("UPDATE lolock_devices SET gps_lat=?,gps_lon=?,addr=? WHERE gps_lat IS NULL", [deviceGPS_lat, deviceGPS_lon, deviceAddr]);
+  mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
+      .spread(function(rows) {
+          getDeviceIdFromDB = rows[0].id;
+          console.log(getDeviceIdFromDB);
+          return mysql.query("INSERT INTO lolock_users (name,phone_id) VALUES (?,?)", [userName, userPhoneId]);
 
-        }).then(function() {
-            console.log(userPhoneId);
-            return mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [userPhoneId]);
-        })
-        .spread(function(rows) {
-            getUserIdFromDB = rows[0].id;
-            console.log(getUserIdFromDB);
-            return mysql.query("INSERT INTO lolock_register (user_id,device_id) VALUES (?,?)", [getUserIdFromDB, getDeviceIdFromDB]);
-        })
-        .then(function() {
-            console.log(getUserIdFromDB);
-            return mysql.query("SELECT * FROM lolock_register WHERE device_id = ?", [getDeviceIdFromDB]);
-        })
-        .spread(function(rows) {
-            res.status(200);
-            res.json({
-                code: 'SUCCESS',
-                message: '등록 성공'
-            });
-        })
-        .catch(function(err) {
-            console.log(err);
-            res.status(500);
-            res.json({
-                code: 'DB_ERR',
-                message: '데이터베이스 에러'
-            });
-            // TODO : LoLock Device에 새로운 사용자 정보 전송
-        });
+      }).then(function() {
+          console.log(userPhoneId);
+          return mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [userPhoneId]);
+      })
+      .spread(function(rows) {
+          getUserIdFromDB = rows[0].id;
+          console.log(getUserIdFromDB);
+          return mysql.query("INSERT INTO lolock_register (user_id,device_id) VALUES (?,?)", [getUserIdFromDB, getDeviceIdFromDB]);
+      })
+      .then(function() {
+          console.log(getUserIdFromDB);
+          return mysql.query("SELECT * FROM lolock_register WHERE device_id = ?", [getDeviceIdFromDB]);
+      })
+      .spread(function(rows) {
+          res.status(200);
+          res.json({
+              code: 'SUCCESS',
+              message: '등록 성공'
+          });
+      })
+      .catch(function(err) {
+          console.log(err);
+          res.status(500);
+          res.json({
+              code: 'DB_ERR',
+              message: '데이터베이스 에러'
+          });
+          // TODO : LoLock Device에 새로운 사용자 정보 전송
+      });
 });
 
 
