@@ -451,7 +451,7 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
         weatherdataModifyRequiredData(body, roomateTokenArray, forecastoptions, 1, function(data){
           responseToReq.send(JSON.stringify(data));
           console.log("날씨 response 성공");
-        })));
+        });
       }
       else if (!error && response.statusCode == 200) {
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
