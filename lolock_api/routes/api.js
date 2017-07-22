@@ -568,7 +568,7 @@ var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, for
           data.maxTemperature = weatherDataItemArray[i].fcstValue;
         }
         if(weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstTime) < Number(time))
-          data.probabiltyRain = weatherDataItemArray[i].fcstValue;
+          data.probabilityRain = weatherDataItemArray[i].fcstValue;
       }
       console.log("data : " + JSON.stringify(data));
       if(flag === 0)
