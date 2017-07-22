@@ -92,6 +92,46 @@ router.get('/userids/:user_id/passwords/:passwd', function(req, res, next) {
   });
 })
 
+router.get('/userInfo/:phoneId', function(req, res, next) {
+    var userPhoneId = req.params.phoneId;
+    var userName;
+    mysql.query("SELECT * FROM lolock_users WHERE phone_id=?", [userPhoneId])
+        .spread(function(rows) {
+            console.log(rows.length);
+            if (rows.length == 0) {
+                res.json({
+                    code: 'NOT REGISTRED',
+                    message: '미등록 핸드폰',
+                    userInfo: {
+
+                    }
+                });
+            } else {
+                userName = rows[0].name;
+                mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ?", [rows[0].id])
+                    .spread(function(rows) {
+                        console.log(rows.length);
+                        if (rows.length != 0) {
+                            return mysql.query("SELECT * FROM lolock_devices WHERE id = ?", [rows[0].device_id]);
+                        }
+                    })
+                    .spread(function(rows) {
+                        console.log(rows.length);
+                        if (rows.length != 0) {
+                            res.json({
+                                code: 'REGISTRED',
+                                messaege: "등록된 핸드폰",
+                                userInfo: {
+                                    name: userName,
+                                    lolockLTID: rows[0].device_id
+                                }
+                            })
+                        }
+                    });
+            }
+        });
+});
+
 
 /* GET housemate list and response to app */
 router.get('/homemateslist/:LTID', function(req, res, next) {
@@ -204,7 +244,6 @@ router.post('/loradata', function(req, res, next) {
   console.log(content, lastModifiedTime); // content 2017-07-16T21:35:14+09:00
   console.log(LTID);
   console.log('\n');
-
   mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
     .spread(function(rows) {
       console.log(rows[0].id);
@@ -234,6 +273,7 @@ router.post('/loradata', function(req, res, next) {
           }
       });
       */
+
 });
 router.get('/checkId/:deviceId', function(req, res, next) {
     var deviceId = "00000174d02544fffe" + req.params.deviceId;
@@ -268,7 +308,8 @@ router.post('/register', function(req, res, next) {
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
         .spread(function(rows) {
             getDeviceIdFromDB = rows[0].id;
-            return mysql.query("INSERT INTO lolock_users (name,phone_id,bluetooth_id) VALUES (?,?,?)", [userName, userPhoneId, userBluetoothId]);
+            console.log(getDeviceIdFromDB);
+            return mysql.query("INSERT INTO lolock_users (name,phone_id) VALUES (?,?)", [userName, userPhoneId]);
 
         }).then(function() {
             console.log(userPhoneId);
@@ -284,16 +325,11 @@ router.post('/register', function(req, res, next) {
             return mysql.query("SELECT * FROM lolock_register WHERE device_id = ?", [getDeviceIdFromDB]);
         })
         .spread(function(rows) {
-            res.status(201);
-            sendControllMessage("00" + rows.length + userBluetoothId, deviceId, res);
-            // 0 멤버등록
-            // 외출상태 (0 or 1)
-            // 멤버인덱스
-            // bluetooth_id
-            // res.json({
-            //     code: 'SUCCESS',
-            //     message: '작성 성공'
-            // });
+            res.status(200);
+            res.json({
+                code: 'SUCCESS',
+                message: '등록 성공'
+            });
         })
         .catch(function(err) {
             console.log(err);
@@ -306,6 +342,24 @@ router.post('/register', function(req, res, next) {
         });
 });
 
+
+//출입 기록 관리
+// router.get('/outing-log/:phoneId')
+// {
+//   var phoneId = req.params.phoneId;
+//   var randomStr;
+//   mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
+//       .spread(function(rows) {
+//           console.log(rows);
+//           return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
+//       })
+//       .spread(function(rows) {
+//           console.log(rows);
+//           return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
+//       })
+//       .
+// }
+
 /* GET  */
 router.get('/weatherdata/:LTID', function(req, res, next) {
   var LTID = "00000174d02544fffe" + req.params.LTID;
@@ -316,8 +370,6 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
       console.log(rows[0].id);
       gps_lat = rows[0].gps_lat;
       gps_lon = rows[0].gps_lon;
-      console.log("lat : " + gps_lat);
-      console.log("lon : " + gps_lon);
       return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
     })
     .spread(function(roomateRows) {
@@ -330,38 +382,38 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
 })
 
 router.get('/open-url/:phoneId', function(req, res, next) {
-    var phoneId = req.params.phoneId;
-    var randomStr;
-    mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
-        .spread(function(rows) {
-            console.log(rows);
-            return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
-        })
-        .spread(function(rows) {
-            console.log(rows);
-            return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
+  var phoneId = req.params.phoneId;
+  var randomStr;
+  mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
+      .spread(function(rows) {
+          console.log(rows);
+          return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
+      })
+      .spread(function(rows) {
+          console.log(rows);
+          return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
 
-        })
-        .spread(function(rows) {
-            console.log(rows);
-            console.log();
-            randomStr = Math.random().toString(36).substring(7);
-            return mysql.query("INSERT INTO lolock_open_url (device_id,url) VALUES(?,?)", [rows[0].device_id, randomStr]);
-        })
-        .then(function() {
-            var jsonRes = {
-                "link": "13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
-            }
-            res.json(jsonRes);
-        })
-        .catch(function(err) {
-            console.log(err);
-            res.status(500);
-            res.json({
-                code: 'DB_ERR',
-                message: '데이터베이스 에러'
-            });
-        });
+      })
+      .spread(function(rows) {
+          console.log(rows);
+          console.log();
+          randomStr = Math.random().toString(36).substring(20);
+          return mysql.query("INSERT INTO lolock_open_url (device_id,url) VALUES(?,?)", [rows[0].device_id, randomStr]);
+      })
+      .then(function() {
+          res.json({
+              code: 'CREATED',
+              link: "http://13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
+          });
+      })
+      .catch(function(err) {
+          console.log(err);
+          res.status(500);
+          res.json({
+              code: 'DB_ERR',
+              message: '데이터베이스 에러'
+          });
+      });
 });
 
 router.get('/disposable-link/:linkId', function(req, res, next) {
