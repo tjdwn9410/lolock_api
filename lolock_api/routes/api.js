@@ -296,17 +296,19 @@ router.post('/register', function(req, res, next) {
 router.get('/weatherdata/:LTID', function(req, res, next) {
   var LTID = req.params.LTID;
 
-  mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", LTID)
+  mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
     .spread(function(rows) {
       console.log(rows[0].id);
-      return mysql.query("SELECT phone_id, gps_lat, gps_lon FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
+      var gps_lat = rows[0].gps_lat;
+      var gps_lon = rows[0].gps_lon;
+      return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
     })
     .spread(function(roomateRows) {
       var roomateTokenArray = new Array();
       for (var j in roomateRows) {
         roomateTokenArray.push(roomateRows[j].phone_id);
       }
-      receiveWeatherInfo(roomateTokenArray, roomateRows[0].gps_lon, roomateRows[0].gps_lat, "2017-07-20T23:57:14+09:00", 1, res);
+      receiveWeatherInfo(roomateTokenArray, gps_lon, gps_lat, moment().format('YYYY-MM-DDTHH:mm:ssZ'), 1, res);
     })
 })
 
