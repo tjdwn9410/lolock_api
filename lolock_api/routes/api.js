@@ -324,15 +324,10 @@ router.post('/register', function(req, res, next) {
         })
         .spread(function(rows) {
             res.status(201);
-            sendControllMessage("00" + rows.length + userBluetoothId, deviceId, res);
-            // 0 멤버등록
-            // 외출상태 (0 or 1)
-            // 멤버인덱스
-            // bluetooth_id
-            // res.json({
-            //     code: 'SUCCESS',
-            //     message: '작성 성공'
-            // });
+            res.json({
+                code: 'SUCCESS',
+                message: '등록 성공'
+            });
         })
         .catch(function(err) {
             console.log(err);
