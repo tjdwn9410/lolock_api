@@ -536,7 +536,7 @@ var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, for
     } else if (weatherDataItemArray[i].category === "SKY") {
       data.sky = weatherDataItemArray[i].obsrValue;
     } else if (weatherDataItemArray[i].category === "T1H") {
-      data.실시간온도 = weatherDataItemArray[i].obsrValue;
+      data.temperature = weatherDataItemArray[i].obsrValue;
     }
   }
   if(data.pty == 0){
@@ -563,12 +563,12 @@ var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, for
       var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
       for (var i in weatherDataItemArray) {
         if (weatherDataItemArray[i].category === "TMN") {
-          data.tmn = weatherDataItemArray[i].fcstValue;
+          data.minTemperature = weatherDataItemArray[i].fcstValue;
         } else if (weatherDataItemArray[i].category === "TMX") {
-          data.tmx = weatherDataItemArray[i].fcstValue;
+          data.maxTemperature = weatherDataItemArray[i].fcstValue;
         }
         if(weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstTime) < Number(time))
-          data.pop = weatherDataItemArray[i].fcstValue;
+          data.probabiltyRain = weatherDataItemArray[i].fcstValue;
       }
       console.log("data : " + JSON.stringify(data));
       if(flag === 0)
