@@ -123,7 +123,7 @@ router.get('/userInfo/:phoneId', function(req, res, next) {
                                 messaege: "등록된 핸드폰",
                                 userInfo: {
                                     name: userName,
-                                    lolockLTID: rows[0].device_id
+                                    lolockLTID: rows[0].device_id.substring(rows[0].device_id.length-6,rows[0].device_id.length)
                                 }
                             })
                         }
@@ -136,7 +136,7 @@ router.get('/userInfo/:phoneId', function(req, res, next) {
 /* GET housemate list and response to app */
 router.get('/homemateslist/:LTID', function(req, res, next) {
     console.log(JSON.stringify(req.headers.ltid)); // "Headers 의 LTID 키를 가져옴"
-    var LoLockId = req.params.LTID;
+    var LoLockId ="00000174d02544fffe"+ req.params.LTID;
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [LoLockId])
         .spread(function(rows) {
             if (rows[0] == null) {
@@ -362,7 +362,7 @@ router.post('/register', function(req, res, next) {
 
 /* GET  */
 router.get('/weatherdata/:LTID', function(req, res, next) {
-    var LTID = req.params.LTID;
+    var LTID = "00000174d02544fffe"+ req.params.LTID;
     var gps_lat;
     var gps_lon;
     console.log(LTID);
