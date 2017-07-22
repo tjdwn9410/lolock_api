@@ -218,7 +218,7 @@ router.post('/loradata', function(req, res, next) {
       for (var j in roomateRows) {
         roomateTokenArray.push(roomateRows[j].phone_id);
       }
-      receiveWeatherInfo(roomateTokenArray, gps_lon, gps_lat, lastModifiedTime, 0);
+      //receiveWeatherInfo(roomateTokenArray, gps_lon, gps_lat, lastModifiedTime, 0);
     })
   /* 위 테스트 중 DB 접근하면 안됌
 
@@ -556,22 +556,27 @@ var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, for
   delete data.pty;
 
   request(forecastoptions, function(error, response, body) {
-    var weatherDataobj = eval("(" + body + ")");
-    var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
-    for (var i in weatherDataItemArray) {
-      if (weatherDataItemArray[i].category === "TMN") {
-        data.tmn = weatherDataItemArray[i].fcstValue;
-      } else if (weatherDataItemArray[i].category === "TMX") {
-        data.tmx = weatherDataItemArray[i].fcstValue;
+    if(response.response.statusCode == 200){
+      var weatherDataobj = eval("(" + body + ")");
+      var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
+      for (var i in weatherDataItemArray) {
+        if (weatherDataItemArray[i].category === "TMN") {
+          data.tmn = weatherDataItemArray[i].fcstValue;
+        } else if (weatherDataItemArray[i].category === "TMX") {
+          data.tmx = weatherDataItemArray[i].fcstValue;
+        }
+        if(weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstTime) < Number(time))
+          data.pop = weatherDataItemArray[i].fcstValue;
       }
-      if(weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstTime) < Number(time))
-        data.pop = weatherDataItemArray[i].fcstValue;
+      console.log("data : " + JSON.stringify(data));
+      if(flag === 0)
+        callback(roomateTokenArray, data);
+      else if(flag === 1){
+        callback(data);
+      }
     }
-    console.log("data : " + JSON.stringify(data));
-    if(flag === 0)
-      callback(roomateTokenArray, data);
-    else if(flag === 1){
-      callback(data);
+    else{
+      console.log("기상청 API 에러!");
     }
   });
 };
