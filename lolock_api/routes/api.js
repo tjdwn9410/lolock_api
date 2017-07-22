@@ -323,7 +323,7 @@ router.post('/register', function(req, res, next) {
             return mysql.query("SELECT * FROM lolock_register WHERE device_id = ?", [getDeviceIdFromDB]);
         })
         .spread(function(rows) {
-            res.status(201);
+            res.status(200);
             res.json({
                 code: 'SUCCESS',
                 message: '등록 성공'
@@ -379,7 +379,7 @@ router.get('/open-url/:phoneId', function(req, res, next) {
         })
         .then(function() {
             var jsonRes = {
-                "link": "13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
+                link: "13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
             }
             res.json(jsonRes);
         })
