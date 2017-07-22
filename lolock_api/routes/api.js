@@ -530,42 +530,42 @@ var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, for
 
   for (var i in weatherDataItemArray) {
     if (weatherDataItemArray[i].category === "PTY") {
-      data.강수형태 = weatherDataItemArray[i].obsrValue;
+      data.pty = weatherDataItemArray[i].obsrValue;
     } else if (weatherDataItemArray[i].category === "SKY") {
-      data.하늘상태 = weatherDataItemArray[i].obsrValue;
+      data.sky = weatherDataItemArray[i].obsrValue;
     } else if (weatherDataItemArray[i].category === "T1H") {
       data.실시간온도 = weatherDataItemArray[i].obsrValue;
     }
   }
-  if(data.강수형태 == 0){
-    if(data.하늘상태 == 1)
-      data.하늘상태 = "맑음";
-    else if(data.하늘상태 == 2)
-      data.하늘상태 = "구름조금"
-    else if(data.하늘상태 == 3)
-      data.하늘상태 = "구름많음"
-    else if(data.하늘상태 == 4)
-      data.하늘상태 = "흐림"
+  if(data.pty == 0){
+    if(data.sky == 1)
+      data.sky = "맑음";
+    else if(data.sky == 2)
+      data.sky = "구름조금"
+    else if(data.sky == 3)
+      data.sky = "구름많음"
+    else if(data.sky == 4)
+      data.sky = "흐림"
   }
-  else if(data.강수형태 == 1)
-    data.하늘상태 = "비";
-  else if(data.강수형태 == 2)
-    data.하늘상태 = "비와눈";
-  else if(data.강수형태 == 3)
-    data.하늘상태 = "눈";
-  delete data.강수형태;
+  else if(data.pty == 1)
+    data.sky = "비";
+  else if(data.pty == 2)
+    data.sky = "비와눈";
+  else if(data.pty == 3)
+    data.sky = "눈";
+  delete data.pty;
 
   request(forecastoptions, function(error, response, body) {
     var weatherDataobj = eval("(" + body + ")");
     var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
     for (var i in weatherDataItemArray) {
       if (weatherDataItemArray[i].category === "TMN") {
-        data.최저기온 = weatherDataItemArray[i].fcstValue;
+        data.tmn = weatherDataItemArray[i].fcstValue;
       } else if (weatherDataItemArray[i].category === "TMX") {
-        data.최고기온 = weatherDataItemArray[i].fcstValue;
+        data.tmx = weatherDataItemArray[i].fcstValue;
       }
       if(weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstTime) < Number(time))
-        data.비올확률 = weatherDataItemArray[i].fcstValue;
+        data.pop = weatherDataItemArray[i].fcstValue;
     }
     console.log("data : " + JSON.stringify(data));
     if(flag === 0)
