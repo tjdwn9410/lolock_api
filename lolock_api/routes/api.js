@@ -343,6 +343,23 @@ router.post('/register', function(req, res, next) {
         });
 });
 
+//출입 기록 관리
+router.get('/outing-log/:phoneId')
+{
+  var phoneId = req.params.phoneId;
+  var randomStr;
+  mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
+      .spread(function(rows) {
+          console.log(rows);
+          return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
+      })
+      .spread(function(rows) {
+          console.log(rows);
+          return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
+      })
+      .
+}
+
 /* GET  */
 router.get('/weatherdata/:LTID', function(req, res, next) {
     var LTID = "00000174d02544fffe" + req.params.LTID;
@@ -386,7 +403,7 @@ router.get('/open-url/:phoneId', function(req, res, next) {
         .then(function() {
             res.json({
                 code: 'CREATED',
-                link: "13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
+                link: "http://13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
             });
         })
         .catch(function(err) {
