@@ -570,68 +570,67 @@ var sendPushMessage = function(androidToken, dataObj) {
 }
 
 
-var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, forecastoptions, flag, callback) {
-    var PTYItem = {}; // 강수 형태  / 0 : 없음 / 1 : 비 / 2: 비/눈 / 3 : 눈
-    var SKYItem = {}; // 하늘 상태  / 1 : 맑음 / 2: 구름 조금 / 3: 구름 많음 / 4 : 흐림
-    var T1HItem = {}; // 1시간 기온 / 온도로 나옴
-    var time = moment().format().split('T')[1].split(':')[0];
-    time += "00";
+var weatherdataModifyRequiredData = function(weatherData, roommateTokenArray, forecastoptions, flag, callback) {
+  var time = moment().format().split('T')[1].split(':')[0];
+  time += "00";
 
-    var weatherDataobj = eval("(" + weatherData + ")");
-    var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
-    var data = new Object();
-    data.baseTime = weatherDataItemArray[0].baseTime;
-    data.baseDate = weatherDataItemArray[0].baseDate;
+  var weatherDataobj = eval("(" + weatherData + ")");
+  var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
+  var data = new Object();
+  data.baseTime = weatherDataItemArray[0].baseTime;
+  data.baseDate = weatherDataItemArray[0].baseDate;
 
-    for (var i in weatherDataItemArray) {
-        if (weatherDataItemArray[i].category === "PTY") {
-            data.pty = weatherDataItemArray[i].obsrValue;
-        } else if (weatherDataItemArray[i].category === "SKY") {
-            data.sky = weatherDataItemArray[i].obsrValue;
-        } else if (weatherDataItemArray[i].category === "T1H") {
-            data.실시간온도 = weatherDataItemArray[i].obsrValue;
-        }
+  for (var i in weatherDataItemArray) {
+    if (weatherDataItemArray[i].category === "PTY") {
+      data.pty = weatherDataItemArray[i].obsrValue;
+    } else if (weatherDataItemArray[i].category === "SKY") {
+      data.sky = weatherDataItemArray[i].obsrValue;
+    } else if (weatherDataItemArray[i].category === "T1H") {
+      data.temperature = weatherDataItemArray[i].obsrValue;
     }
-    if (data.pty == 0) {
-        if (data.sky == 1)
-            data.sky = "맑음";
-        else if (data.sky == 2)
-            data.sky = "구름조금"
-        else if (data.sky == 3)
-            data.sky = "구름많음"
-        else if (data.sky == 4)
-            data.sky = "흐림"
-    } else if (data.pty == 1)
-        data.sky = "비";
-    else if (data.pty == 2)
-        data.sky = "비와눈";
-    else if (data.pty == 3)
-        data.sky = "눈";
-    delete data.pty;
+  }
+  if(data.pty == 0){
+    if(data.sky == 1)
+      data.sky = "맑음";
+    else if(data.sky == 2)
+      data.sky = "구름조금"
+    else if(data.sky == 3)
+      data.sky = "구름많음"
+    else if(data.sky == 4)
+      data.sky = "흐림"
+  }
+  else if(data.pty == 1)
+    data.sky = "비";
+  else if(data.pty == 2)
+    data.sky = "비와눈";
+  else if(data.pty == 3)
+    data.sky = "눈";
+  delete data.pty;
 
-    request(forecastoptions, function(error, response, body) {
-        if (response.statusCode == 200) {
-            var weatherDataobj = eval("(" + body + ")");
-            var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
-            for (var i in weatherDataItemArray) {
-                if (weatherDataItemArray[i].category === "TMN") {
-                    data.tmn = weatherDataItemArray[i].fcstValue;
-                } else if (weatherDataItemArray[i].category === "TMX") {
-                    data.tmx = weatherDataItemArray[i].fcstValue;
-                }
-                if (weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstTime) < Number(time))
-                    data.pop = weatherDataItemArray[i].fcstValue;
-            }
-            console.log("data : " + JSON.stringify(data));
-            if (flag === 0)
-                callback(roomateTokenArray, data);
-            else if (flag === 1) {
-                callback(data);
-            }
-        } else {
-            console.log("기상청 API 에러!");
+  request(forecastoptions, function(error, response, body) {
+    if(response.statusCode == 200){
+      var weatherDataobj = eval("(" + body + ")");
+      var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
+      for (var i in weatherDataItemArray) {
+        if (weatherDataItemArray[i].category === "TMN") {
+          data.minTemperature = weatherDataItemArray[i].fcstValue;
+        } else if (weatherDataItemArray[i].category === "TMX") {
+          data.maxTemperature = weatherDataItemArray[i].fcstValue;
         }
-    });
+        if(weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstTime) < Number(time))
+          data.probabilityRain = weatherDataItemArray[i].fcstValue;
+      }
+      console.log("data : " + JSON.stringify(data));
+      if(flag === 0)
+        callback(roommateTokenArray, data);
+      else if(flag === 1){
+        callback(data);
+      }
+    }
+    else{
+      console.log("기상청 API 에러!");
+    }
+  });
 };
 
 module.exports = router;
