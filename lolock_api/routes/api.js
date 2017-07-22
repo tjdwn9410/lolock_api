@@ -313,7 +313,7 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
       console.log(rows[0].id);
       gps_lat = rows[0].gps_lat;
       gps_lon = rows[0].gps_lon;
-      mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
+      return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
     })
     .spread(function(roomateRows) {
       var roomateTokenArray = new Array();
