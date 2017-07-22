@@ -344,7 +344,7 @@ router.post('/register', function(req, res, next) {
 });
 
 //출입 기록 관리
-// router.get('/outing-log/:phoneId')
+// router.get('/outing-log/:phoneId',function(req,res,next)
 // {
 //   var phoneId = req.params.phoneId;
 //   var randomStr;
@@ -358,15 +358,17 @@ router.post('/register', function(req, res, next) {
 //           return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
 //       })
 //       .
-// }
+// });
 
 /* GET  */
 router.get('/weatherdata/:LTID', function(req, res, next) {
     var LTID = "00000174d02544fffe" + req.params.LTID;
     var gps_lat;
     var gps_lon;
+    console.log(LTID);
     mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
         .spread(function(rows) {
+            console.log(rows[0]);
             console.log(rows[0].id);
             gps_lat = rows[0].gps_lat;
             gps_lon = rows[0].gps_lon;
