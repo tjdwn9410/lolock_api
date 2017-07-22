@@ -291,6 +291,7 @@ router.get('/checkId/:deviceId', function(req, res, next) {
 });
 router.post('/register', function(req, res, next) {
     var jsonRes = req.body;
+    console.log(jsonRes);
     var deviceId = "00000174d02544fffe" + jsonRes.registerDeviceId;
     var userName = jsonRes.registerUserName;
     var userPhoneId = jsonRes.registerUserPhoneId;
@@ -305,6 +306,7 @@ router.post('/register', function(req, res, next) {
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
         .spread(function(rows) {
             getDeviceIdFromDB = rows[0].id;
+            console.log(getDeviceIdFromDB);
             return mysql.query("INSERT INTO lolock_users (name,phone_id) VALUES (?,?)", [userName, userPhoneId]);
 
         }).then(function() {
