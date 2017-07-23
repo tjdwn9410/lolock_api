@@ -381,7 +381,7 @@ router.post('/register', function(req, res, next) {
     var getUserIdFromDB;
     console.log(deviceId);
     console.log(userName);
-    mysql.query("UPDATE lolock_devices SET gps_lat=?,gps_lon=?,addr=? WHERE gps_lat IS NULL", [deviceGPS_lat, deviceGPS_lon, deviceAddr]);
+    mysql.query("UPDATE lolock_devices SET gps_lat=?,gps_lon=?,addr=? WHERE deviceId = ?,gps_lat IS NULL", [deviceGPS_lat, deviceGPS_lon, deviceAddr,deviceId]);
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
         .spread(function(rows) {
             getDeviceIdFromDB = rows[0].id;
@@ -453,20 +453,31 @@ router.get('/outing-log/:phoneId', function(req, res, next) {
                         strangeFlag = 1;
                     }
                     var resTime = rows[i].time;
+                    var week = new Array('일', '월', '화', '수', '목', '금', '토');
+                    var today = new Date(resTime.substring(0,4)+'-'+resTime.substring(4, 6) * 1+'-'+resTime.substring(6, 8) * 1 + " "+resTime.substring(8, 10) * 1 +":"+resTime.substring(10, 12) * 1);
+                    var todayLabel = week[today.getDay()];
+                    console.log(today.getTime()+ " "+ resTime.substring(0,4)+'-'+resTime.substring(4, 6) * 1+'-'+resTime.substring(6, 8) * 1);
+                    console.log(new Date().getTime());
                     var jsonObj = {
                         "name": resName,
                         "outFlag": rows[i].out_flag,
                         "strangeFlag": strangeFlag,
                         "outTime": {
-                            "month": resTime.substring(0, 2) * 1,
-                            "day": resTime.substring(2, 4) * 1,
-                            "hour": resTime.substring(4, 6) * 1,
-                            "min": resTime.substring(6, 8) * 1
+                            "month": resTime.substring(4, 6) * 1,
+                            "day": resTime.substring(6, 8) * 1,
+                            "hour": resTime.substring(8, 10) * 1,
+                            "min": resTime.substring(10, 12) * 1,
+                            "dayName" : todayLabel,
+                            "timeStamp" : new Date().getTime()-today.getTime()
                         }
                     }
                     jsonArray.push(jsonObj);
                 }
-                res.json(jsonArray);
+                var jsonRes =
+                {
+                  "results" : jsonArray
+                }
+                res.json(jsonRes);
             }
         })
 });
