@@ -252,7 +252,7 @@ router.post('/loradata', function(req, res, next) {
         var targetPhone_id = ""
         var targetPersonName = "";
 
-        mysql.query("SELECT id, aadr FROM lolock_devices WHERE device_id=?", LTID)
+        mysql.query("SELECT id, addr FROM lolock_devices WHERE device_id=?", LTID)
             .spread(function(rows) {
                 console.log("lolock id : " + rows[0].id);
                 return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
@@ -392,22 +392,57 @@ router.post('/register', function(req, res, next) {
         });
 });
 
-//
-// 출입 기록 관리
-// router.get('/outing-log/:phoneId', function(req, res, next) {
-//     var phoneId = req.params.phoneId;
-//     var randomStr;
-//     mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
-//         .spread(function(rows) {
-//             console.log(rows);
-//             return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
-//         })
-//         .spread(function(rows) {
-//             console.log(rows);
-//             return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
-//         })
-//         .
-// });
+
+//출입 기록 관리
+router.get('/outing-log/:phoneId', function(req, res, next) {
+    var phoneId = req.params.phoneId;
+    var randomStr;
+    mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
+        .spread(function(rows) {
+            console.log(rows);
+            return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
+        })
+        .spread(function(rows) {
+            return mysql.query("SELECT * FROM lolock_logs AS L LEFT JOIN lolock_users AS U ON L.user_id = U.id WHERE device_id = ? ORDER BY L.time DESC", [rows[0].device_id]);
+        })
+        .spread(function(rows) {
+            console.log(rows);
+            if (rows.length == 0) {
+                res.send();
+            } else {
+                var jsonArray = new Array();
+                // private String name;
+                // private String time;
+                // private String strangeFlag;
+                // outFlag;
+                for (var i in rows) {
+                    var resName;
+                    var strangeFlag;
+                    if (rows[i].id != null) {
+                        resName = rows[i].name;
+                        strangeFlag = 0;
+                    } else {
+                        resName = "외부인";
+                        strangeFlag = 1;
+                    }
+                    var resTime = rows[i].time;
+                    var jsonObj = {
+                        "name": resName,
+                        "outFlag": rows[i].out_flag,
+                        "strangeFlag": strangeFlag,
+                        "outTime": {
+                            "month": resTime.substring(0, 2) * 1,
+                            "day": resTime.substring(2, 4) * 1,
+                            "hour": resTime.substring(4, 6) * 1,
+                            "min": resTime.substring(6, 8) * 1
+                        }
+                    }
+                    jsonArray.push(jsonObj);
+                }
+                res.json(jsonArray);
+            }
+        })
+});
 
 /* GET  */
 router.get('/weatherdata/:LTID', function(req, res, next) {
