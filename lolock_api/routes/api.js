@@ -428,8 +428,9 @@ router.get('/outing-log/:phoneId', function(req, res, next) {
                     }
                     var resTime = rows[i].time;
                     var week = new Array('일', '월', '화', '수', '목', '금', '토');
-                    var today = new Date(resTime.substring(0,4)+'-'+resTime.substring(4, 6) * 1+'-'+resTime.substring(6, 8) * 1).getDay();
-                    var todayLabel = week[today];
+                    var today = new Date(resTime.substring(0,4)+'-'+resTime.substring(4, 6) * 1+'-'+resTime.substring(6, 8) * 1 + " "+resTime.substring(8, 10) * 1 +":"+resTime.substring(10, 12) * 1);
+                    var todayLabel = week[today.getDay()];
+                    console.log(today.getTime()+ " "+ resTime.substring(0,4)+'-'+resTime.substring(4, 6) * 1+'-'+resTime.substring(6, 8) * 1);
                     var jsonObj = {
                         "name": resName,
                         "outFlag": rows[i].out_flag,
@@ -439,7 +440,8 @@ router.get('/outing-log/:phoneId', function(req, res, next) {
                             "day": resTime.substring(6, 8) * 1,
                             "hour": resTime.substring(8, 10) * 1,
                             "min": resTime.substring(10, 12) * 1,
-                            "dayName" : todayLabel
+                            "dayName" : todayLabel,
+                            "tiemStamp" : new Date().getTime()-today.getTime()
                         }
                     }
                     jsonArray.push(jsonObj);
