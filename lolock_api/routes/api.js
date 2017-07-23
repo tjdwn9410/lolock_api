@@ -234,94 +234,98 @@ router.put('/remotetest', function(req, res, next) {
 
 /* POST loRa subscribe한 데이터 전달받는다.*/
 router.post('/loradata', function(req, res, next) {
-    var notificationMessage = req.body['m2m:cin'];
-    var content = notificationMessage.con[0]; // lora 명령어
-    var lastModifiedTime = notificationMessage.lt[0]; // Thingplug에 전송된 시간
-    var uri = notificationMessage.sr[0].split('/');
-    var LTID = uri[3].substring(10);
+  var notificationMessage = req.body['m2m:cin'];
+  var content = notificationMessage.con[0]; // lora 명령어
+  var lastModifiedTime = notificationMessage.lt[0]; // Thingplug에 전송된 시간
+  var uri = notificationMessage.sr[0].split('/');
+  var LTID = uri[3].substring(10);
 
-    console.log(content, lastModifiedTime); // content 2017-07-16T21:35:14+09:00
-    console.log(LTID);
 
-    console.log("typeof content : " + typeof content);
-    if (content[0] == "3" && content[1] == "0") // 누군가 나갈때
-    {
-        console.log("누군가 나갈때 시작");
-        // TODO : 각 핸드폰에 요청을 날리고 targetPhone을 찾아야한다.
-        // 나중에 입력해야함
-        var targetPhone_id = ""
-        var targetPersonName = "";
+  console.log(content, lastModifiedTime); // content 2017-07-16T21:35:14+09:00
+  console.log(LTID);
 
-        mysql.query("SELECT id, addr FROM lolock_devices WHERE device_id=?", LTID)
-            .spread(function(rows) {
-                console.log("lolock id : " + rows[0].id);
-                return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
-            })
-            .spread(function(roommateRows) {
-                for (var j in roommateRows) {
-                    var pushData = {}
-                    if (roommateRows[j].phone_id == targetPhone_id) {
-                        pushData.pushCode = 0;
-                        sendPushMessage(roommateRows[j].phone_id, pushData)
-                            .then(function(text) {
-                                console.log(text)
-                            }, function(err) {
-                                console.log(err)
-                            });
-                    } else {
-                        pushData.pushCode = 1;
-                        pushData.message = targetPersonName + "님이 나갔습니다."
-                        sendPushMessage(roommateRows[j].phone_id, pushData)
-                            .then(function(text) {
-                                console.log(text)
-                            }, function(err) {
-                                console.log(err)
-                            });
-                    }
-                }
-            })
-    } else if (content[0] == "3" && content[1] == "1") // 누군가 들어올 떄
-    {
-        console.log("누군가 들어올 때 시작");
-    } else if (content[0] == "3" && content[1] == "2") // 진동센서에 의해 불법침입이 감지될 때
-    {
-        console.log("불법침입감지 시작");
-        mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", LTID)
-            .spread(function(rows) {
-                console.log("lolock id : " + rows[0].id + "->" + LTID + "에서 진동이 감지!!");
-                return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
-            })
-            .spread(function(roommateRows) {
-                // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
-                var dataObj = {};
-                dataObj.pushCode = 2;
-                dataObj.message = "침입자가 감지되었습니다";
-                for (var j in roommateRows) {
-                    sendPushMessage(roommateRows[j].phone_id, dataObj)
-                        .then(function(text) {
-                            console.log(text)
-                        }, function(err) {
-                            console.log(err)
-                        });
-                    console.log("roommate phone_id : " + roommateRows[j].phone_id);
-                }
-            })
-    }
+  console.log("typeof content : " + typeof content);
+  if(content[0] == "3" && content[1] == "0")  // 누군가 나갈때
+  {
+    console.log("누군가 나갈때 시작");
+    // TODO : 각 핸드폰에 요청을 날리고 targetPhone을 찾아야한다.
+    // 나중에 입력해야함
+    var targetPhone_id = ""
+    var targetPersonName = "";
 
-    /* 위 테스트 중 DB 접근하면 안됌
+    mysql.query("SELECT id, addr FROM lolock_devices WHERE device_id=?", LTID)
+      .spread(function(rows) {
+        console.log("lolock id : " + rows[0].id);
+        return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
+      })
+      .spread(function(roommateRows) {
+        for (var j in roommateRows) {
+          var pushData = {}
+          if(roommateRows[j].phone_id == targetPhone_id){
+            pushData.pushCode = "0";
+            sendPushMessage(roommateRows[j].phone_id, pushData)
+              .then(function(text) {
+                console.log(text)
+               }, function(err) {
+                 console.log(err)
+               });
+          }
+          else{
+            pushData.pushCode = "1";
+            pushData.message = targetPersonName + "님이 나갔습니다."
+            sendPushMessage(roommateRows[j].phone_id, pushData)
+              .then(function(text) {
+                console.log(text)
+               }, function(err) {
+                 console.log(err)
+               });
+          }
+        }
+      })
+  }
+  else if(content[0] == "3" && content[1] == "1") // 누군가 들어올 떄
+  {
+    console.log("누군가 들어올 때 시작");
+  }
+  else if(content[0] == "3" && content[1] == "2") // 진동센서에 의해 불법침입이 감지될 때
+  {
+    console.log("불법침입감지 시작");
+    mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", LTID)
+      .spread(function(rows) {
+        console.log("lolock id : " + rows[0].id  + "->" + LTID + "에서 진동이 감지!!");
+        return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
+      })
+      .spread(function(roommateRows) {
+        // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
+        var dataObj = {};
+        dataObj.pushCode = "2";
+        dataObj.message = "침입자가 감지되었습니다";
+        for (var j in roommateRows) {
+          sendPushMessage(roommateRows[j].phone_id, dataObj)
+            .then(function(text) {
+              console.log(text)
+             }, function(err) {
+               console.log(err)
+             });
+          console.log("roommate phone_id : " + roommateRows[j].phone_id);
+        }
+      })
+  }
 
-      // TODO : if content가 불법침입이라면..
+  /* 위 테스트 중 DB 접근하면 안됌
 
-      // TODO : else if content가 등록된 사용자의 출입(+ 자동 문열림 기능)이라면
-      // 로그도 DB에 남겨야 함
-      mysql.query("SELECT id FROM lolock_register WHERE device_id=?", [LTID])
-          .spread(function(rows){
-            var phoneList = new Array();
-            for (var i in rows){
-              phoneList.push(mysql.query("SELECT phone_id FROM lolock_users WHERE id=?", rows[i]));
-            }
-        });
-        */
+    // TODO : if content가 불법침입이라면..
+
+    // TODO : else if content가 등록된 사용자의 출입(+ 자동 문열림 기능)이라면
+    // 로그도 DB에 남겨야 함
+    mysql.query("SELECT id FROM lolock_register WHERE device_id=?", [LTID])
+        .spread(function(rows){
+          var phoneList = new Array();
+          for (var i in rows){
+            phoneList.push(mysql.query("SELECT phone_id FROM lolock_users WHERE id=?", rows[i]));
+          }
+      });
+      */
 
 });
 router.get('/checkId/:deviceId', function(req, res, next) {
@@ -636,32 +640,31 @@ var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, res
 // }
 // TODO : data에 인덱스를 달아서 얘가 기상정보 push인지 누가 들어와서 로그를 남기는건지 알려줘야함
 var sendPushMessage = function(androidToken, dataObj) {
-    return new Promise(function(resolve, reject) {
-        // TODO
-        var headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
-        }
-        var options = {
-            url: 'https://fcm.googleapis.com/fcm/send',
-            method: 'POST',
-            headers: headers
-        }
-        var toAppBody = {}; // push 메세지 body
-        toAppBody.data = dataObj;
-        toAppBody.to = androidToken;
-        options.body = JSON.stringify(toAppBody);
-        // TODO : 동기화 할 것 promise 사용
-        request(options, function(error, response, body) {
-            console.log(response.body);
-            var bodyobj = eval("(" + response.body + ")");
-            // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
-            if (bodyobj.success === 1) {
-                resolve(androidToken + " 푸시 메세지 보내기 완료" + ", 내용 : " + options.body);
-            } else {
-                reject(androidToken + " 푸시 메세지 실패!!!");
-            }
-        })
+  return new Promise(function(resolve, reject) {
+    // TODO
+    var headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
+    }
+    var options = {
+      url: 'https://fcm.googleapis.com/fcm/send',
+      method: 'POST',
+      headers: headers
+    }
+    var toAppBody = {}; // push 메세지 body
+    toAppBody.data = dataObj;
+    toAppBody.to = androidToken;
+    options.body = JSON.stringify(toAppBody);
+    // TODO : 동기화 할 것 promise 사용
+    request(options, function(error, response, body) {
+      console.log(response.body);
+      var bodyobj = eval("(" + response.body + ")");
+      // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
+      if (bodyobj.success === 1) {
+        resolve(androidToken + " 푸시 메세지 보내기 완료" + ", 내용 : " + JSON.stringify(toAppBody));
+      } else {
+        reject(androidToken + " 푸시 메세지 실패!!!" + ", 내용 : " +  + JSON.stringify(toAppBody));
+      }
     })
 }
 
