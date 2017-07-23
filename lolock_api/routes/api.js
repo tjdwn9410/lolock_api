@@ -255,7 +255,7 @@ router.post('/checkout/:phone_id', function(req, res, next){
           var timeArr = timeArr[1].split(':');
           var time = dateArr[0]+dateArr[1]+dateArr[2]+timeArr[0]+timeArr[1];   // 201707232325
           console.log(roommateRows[j].device_id + " " + roommateRows[j].user_id + " " + time + " " + 1);
-          mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)",roommateRows[j].device_id, roommateRows[j].user_id, time, 1);
+          mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)",[roommateRows[j].device_id, roommateRows[j].user_id, time, 1]);
         }
         else{
           pushData.pushCode = "1";
