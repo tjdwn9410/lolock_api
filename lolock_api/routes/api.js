@@ -260,7 +260,7 @@ router.post('/loradata', function(req, res, next) {
         for (var j in roommateRows) {
           var pushData = {}
           if(roommateRows[j].phone_id == targetPhone_id){
-            pushData.pushCode = 0;
+            pushData.pushCode = "0";
             sendPushMessage(roommateRows[j].phone_id, pushData)
               .then(function(text) {
                 console.log(text)
@@ -269,7 +269,7 @@ router.post('/loradata', function(req, res, next) {
                });
           }
           else{
-            pushData.pushCode = 1;
+            pushData.pushCode = "1";
             pushData.message = targetPersonName + "님이 나갔습니다."
             sendPushMessage(roommateRows[j].phone_id, pushData)
               .then(function(text) {
@@ -296,7 +296,7 @@ router.post('/loradata', function(req, res, next) {
       .spread(function(roommateRows) {
         // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
         var dataObj = {};
-        dataObj.pushCode = 2;
+        dataObj.pushCode = "2";
         dataObj.message = "침입자가 감지되었습니다";
         for (var j in roommateRows) {
           sendPushMessage(roommateRows[j].phone_id, dataObj)
@@ -625,9 +625,9 @@ var sendPushMessage = function(androidToken, dataObj) {
       var bodyobj = eval("(" + response.body + ")");
       // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
       if (bodyobj.success === 1) {
-        resolve(androidToken + " 푸시 메세지 보내기 완료" + ", 내용 : " + dataObj);
+        resolve(androidToken + " 푸시 메세지 보내기 완료" + ", 내용 : " + JSON.stringify(toAppBody));
       } else {
-        reject(androidToken + " 푸시 메세지 실패!!!" + ", 내용 : " +  + dataObj);
+        reject(androidToken + " 푸시 메세지 실패!!!" + ", 내용 : " +  + JSON.stringify(toAppBody));
       }
     })
   })
