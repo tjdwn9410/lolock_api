@@ -123,7 +123,7 @@ router.get('/userInfo/:phoneId', function(req, res, next) {
                                 messaege: "등록된 핸드폰",
                                 userInfo: {
                                     name: userName,
-                                    lolockLTID: rows[0].device_id
+                                    lolockLTID: rows[0].device_id.substring(rows[0].device_id.length - 6, rows[0].device_id.length)
                                 }
                             })
                         }
@@ -143,31 +143,31 @@ router.get('/homemateslist/:LTID', function(req, res, next) {
         res.json({
           code: 'DEVICE_ID_ERR',
           message: '등록되지 않은 기기'
-        });
-      } else {
-        getDeviceIdFromDB = rows[0].id;
-        return mysql.query("SELECT * FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", [getDeviceIdFromDB]);
-      }
-    })
-    .spread(function(rows) {
-      var jsonArray = new Array();
-      var count = 0;
-      for (var i in rows) {
-        var jsonObj = {
-          "mateImageUrl": rows[i].profile_url,
-          "mateName": rows[i].name,
-          "mateOutingFlag": rows[i].flag,
-          "mateDoorOpenTime": rows[i].time
-        };
-        jsonArray.push(jsonObj);
-        count++;
-      }
-      var result = {
-        "mates": jsonArray,
-        "mateNumber": count
-      }
-      res.json(result);
-      //res.send(rows);
+                });
+            } else {
+                getDeviceIdFromDB = rows[0].id;
+                return mysql.query("SELECT * FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", [getDeviceIdFromDB]);
+            }
+        })
+        .spread(function(rows) {
+            var jsonArray = new Array();
+            var count = 0;
+            for (var i in rows) {
+                var jsonObj = {
+                    "mateImageUrl": rows[i].profile_url,
+                    "mateName": rows[i].name,
+                    "mateOutingFlag": rows[i].flag,
+                    "mateDoorOpenTime": rows[i].time
+                };
+                jsonArray.push(jsonObj);
+                count++;
+            }
+            var result = {
+                "mates": jsonArray,
+                "mateNumber": count
+            }
+            res.json(result);
+            //res.send(rows);
     });
   // // TODO : 요청한 앱에 동거인 리스트를 body로 실어서 보냄
 
@@ -238,8 +238,6 @@ router.post('/loradata', function(req, res, next) {
   var lastModifiedTime = notificationMessage.lt[0]; // Thingplug에 전송된 시간
   var uri = notificationMessage.sr[0].split('/');
   var LTID = uri[3].substring(10);
-  var gps_lat;
-  var gps_lon;
 
   console.log(content, lastModifiedTime); // content 2017-07-16T21:35:14+09:00
   console.log(LTID);
@@ -248,21 +246,39 @@ router.post('/loradata', function(req, res, next) {
   console.log("typeof content : " + typeof content);
   if(content[0] == "3" && content[0] == "0")  // 누군가 나갈때
   {
+    // TODO : 각 핸드폰에 요청을 날리고 targetPhone을 찾아야한다.
+    // 나중에 입력해야함
+    var targetPhone_id = ""
+    var targetPersonName = "";
+
     mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
       .spread(function(rows) {
         console.log("lolock id : " + rows[0].id);
-        gps_lat = rows[0].gps_lat;
-        gps_lon = rows[0].gps_lon;
         return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
       })
       .spread(function(roommateRows) {
-        // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
-        var roommateTokenArray = new Array();
         for (var j in roommateRows) {
-          roommateTokenArray.push(roommateRows[j].phone_id);
-          console.log("roommate phone_id" + roommateRows[j].phone_id);
+          var pushData = {}
+          if(roommateRows[j].phone_id == targetPhone_id){
+            pushData.pushCode = 0;
+            sendPushMessage(roommateRows[j].phone_id, pushData)
+              .then(function(text) {
+                console.log(text)
+               }, function(err) {
+                 console.log(err)
+               });
+          }
+          else{
+            pushData.pushCode = 1;
+            pushData.message = targetPersonName + "님이 나갔습니다."
+            sendPushMessage(roommateRows[j].phone_id, pushData)
+              .then(function(text) {
+                console.log(text)
+               }, function(err) {
+                 console.log(err)
+               });
+          }
         }
-        (roommateTokenArray, gps_lon, gps_lat, lastModifiedTime, 0);
       })
   }
   else if(content[0] == "3" && content[0] == "1") // 누군가 들어올 떄
@@ -271,7 +287,26 @@ router.post('/loradata', function(req, res, next) {
   }
   else if(content[0] == "3" && content[0] == "2") // 진동센서에 의해 불법침입이 감지될 때
   {
-
+    mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", LTID)
+      .spread(function(rows) {
+        console.log("lolock id : " + rows[0].id  + "->" + LTID + "에서 진동이 감지!!");
+        return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
+      })
+      .spread(function(roommateRows) {
+        // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
+        var dataObj = {};
+        dataObj.pushCode = 2;
+        dataObj.message = "침입자가 감지되었습니다";
+        for (var j in roommateRows) {
+          sendPushMessage(roommateRows[j].phone_id, dataObj)
+            .then(function(text) {
+              console.log(text)
+             }, function(err) {
+               console.log(err)
+             });
+          console.log("roommate phone_id" + roommateRows[j].phone_id);
+        }
+      })
   }
 
   /* 위 테스트 중 DB 접근하면 안됌
@@ -360,7 +395,7 @@ router.post('/register', function(req, res, next) {
 
 
 //출입 기록 관리
-// router.get('/outing-log/:phoneId')
+// router.get('/outing-log/:phoneId',function(req,res,next)
 // {
 //   var phoneId = req.params.phoneId;
 //   var randomStr;
@@ -393,7 +428,7 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
       for (var j in roommateRows) {
         roommateTokenArray.push(roommateRows[j].phone_id);
       }
-      receiveWeatherInfo(roommateTokenArray, gps_lon, gps_lat, moment().format('YYYY-MM-DDTHH:mm:ssZ'), 1, res);
+      receiveWeatherInfo(gps_lon, gps_lat, moment().format('YYYY-MM-DDTHH:mm:ssZ'), res);
     })
 })
 
@@ -462,7 +497,7 @@ router.get('/disposable-link/:linkId', function(req, res, next) {
 });
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
 // 경도       위도    날짜+시간
-var receiveWeatherInfo = function(roommateTokenArray, gps_long, gps_lat, lastModifiedTime, flag, responseToReq) {
+var receiveWeatherInfo = function(gps_long, gps_lat, lastModifiedTime, responseToReq) {
   var dateArr = lastModifiedTime.split('T')[0].split('-');
   var timeArr = lastModifiedTime.split('T')[1].split(':');
   var date = dateArr[0] + dateArr[1] + dateArr[2];
@@ -517,42 +552,52 @@ var receiveWeatherInfo = function(roommateTokenArray, gps_long, gps_lat, lastMod
       method: 'GET',
     }
     request(options, function(error, response, body) {
-      if(flag === 1 && response.statusCode == 200){
-        weatherdataModifyRequiredData(body, roommateTokenArray, forecastoptions, 1, function(data){
+      if(response.statusCode == 200){
+        weatherdataModifyRequiredData(body, forecastoptions, function(data){
           responseToReq.send(JSON.stringify(data));
           console.log("날씨 response 성공");
         });
       }
-      else if (flag === 0 && !error && response.statusCode == 200) {
-        // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
-        weatherdataModifyRequiredData(body, roommateTokenArray, forecastoptions, 0, sendPushMessageToRoommate)
+      else{
+        responseToReq.send("기상청 API 에러!")
       }
+      // else if (flag === 0 && !error && response.statusCode == 200) {
+      //   // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
+      //   weatherdataModifyRequiredData(body, roommateTokenArray, forecastoptions, 0, sendPushMessageToRoommate)
+      // }
     });
   })
 };
-
-var sendPushMessageToRoommate = function(roommateTokenArray ,weatherRequiredData) {
-  //for (var i in roommateTokenArray) {
-  var repeatPromise = function(cnt, callback) {
-    console.log("cnt : " + cnt);
-    if (cnt == roommateTokenArray.length) {
-      callback();
-      return;
-    }
-    sendPushMessage(roommateTokenArray[cnt], weatherRequiredData)
-      .then(function(text) {
-        console.log(text)
-        repeatPromise(cnt + 1, callback);
-      }, function(err) {
-        console.log(err)
-        repeatPromise(cnt + 1, callback);
-      })
-  }
-  var cnt = 0;
-  repeatPromise(cnt, function() {
-    console.log("보내기 끝");
-  })
-}
+// 푸시 메세지에 pushCode만 필요하고 나머진 필요 없으므로  /loradata 안에서 처리하기로 함
+// var sendPushMessageToRoommate = function(roommateTokenArray) {
+//   //for (var i in roommateTokenArray) {
+//   var repeatPromise = function(cnt, callback) {
+//     console.log("cnt : " + cnt);
+//     if (cnt == roommateTokenArray.length) {
+//       callback();
+//       return;
+//     }
+//     if(roommateTokenArray[cnt] == ){    // 나간 사람 본인
+//       var weatherPushData = {};
+//       weatherPushData.pushCode = 0;
+//       sendPushMessage(roommateTokenArray[cnt], weatherPushData)
+//         .then(function(text) {
+//           console.log(text)
+//           repeatPromise(cnt + 1, callback);
+//         }, function(err) {
+//           console.log(err)
+//           repeatPromise(cnt + 1, callback);
+//         })
+//     }
+//     else{       // 본인 이외에는 누가 나갔다는 푸시메세지 보냄
+//
+//     }
+//   }
+//   var cnt = 0;
+//   repeatPromise(cnt, function() {
+//     console.log("보내기 끝");
+//   })
+// }
 // TODO : data에 인덱스를 달아서 얘가 기상정보 push인지 누가 들어와서 로그를 남기는건지 알려줘야함
 var sendPushMessage = function(androidToken, dataObj) {
   return new Promise(function(resolve, reject) {
@@ -576,7 +621,7 @@ var sendPushMessage = function(androidToken, dataObj) {
       var bodyobj = eval("(" + response.body + ")");
       // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
       if (bodyobj.success === 1) {
-        resolve(androidToken + "보내기 완료");
+        resolve(androidToken + "보내기 완료" + ", 내용 : " + options.body);
       } else {
         reject(androidToken + "실패!!!");
       }
@@ -585,7 +630,7 @@ var sendPushMessage = function(androidToken, dataObj) {
 }
 
 
-var weatherdataModifyRequiredData = function(weatherData, roommateTokenArray, forecastoptions, flag, callback) {
+var weatherdataModifyRequiredData = function(weatherData, forecastoptions, callback) {
   var time = moment().format().split('T')[1].split(':')[0];
   time += "00";
 
@@ -636,11 +681,7 @@ var weatherdataModifyRequiredData = function(weatherData, roommateTokenArray, fo
           data.probabilityRain = weatherDataItemArray[i].fcstValue;
       }
       console.log("data : " + JSON.stringify(data));
-      if(flag === 0)
-        callback(roommateTokenArray, data);
-      else if(flag === 1){
-        callback(data);
-      }
+      callback(data);
     }
     else{
       console.log("기상청 API 에러!");
