@@ -427,7 +427,7 @@ router.get('/outing-log/:phoneId', function(req, res, next) {
                         strangeFlag = 1;
                     }
                     var resTime = rows[i].time;
-                    var week = new Array('일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일');
+                    var week = new Array('일', '월', '화', '수', '목', '금', '토');
                     var today = new Date(resTime.substring(0,4)+'-'+resTime.substring(4, 6) * 1+'-'+resTime.substring(6, 8) * 1).getDay();
                     var todayLabel = week[today];
                     var jsonObj = {
