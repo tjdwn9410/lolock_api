@@ -136,7 +136,7 @@ router.get('/userInfo/:phoneId', function(req, res, next) {
 /* GET housemate list and response to app */
 router.get('/homemateslist/:LTID', function(req, res, next) {
     console.log(JSON.stringify(req.headers.ltid)); // "Headers 의 LTID 키를 가져옴"
-    var LoLockId = req.params.LTID;
+    var LoLockId = "00000174d02544fffe" + req.params.LTID;
     console.log(LoLockId);
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [LoLockId])
         .spread(function(rows) {
@@ -392,8 +392,8 @@ router.post('/register', function(req, res, next) {
         });
 });
 
-
-//출입 기록 관리
+//
+// 출입 기록 관리
 // router.get('/outing-log/:phoneId', function(req, res, next) {
 //     var phoneId = req.params.phoneId;
 //     var randomStr;
