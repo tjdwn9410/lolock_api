@@ -274,6 +274,7 @@ router.post('/checkout/:phone_id', function(req, res, next){
 
 /* POST loRa subscribe한 데이터 전달받는다.*/
 router.post('/loradata', function(req, res, next) {
+
   var notificationMessage = req.body['m2m:cin'];
   var content = notificationMessage.con[0]; // lora 명령어
   var lastModifiedTime = notificationMessage.lt[0]; // Thingplug에 전송된 시간
@@ -700,7 +701,7 @@ var sendPushMessage = function(androidToken, dataObj) {
         reject(androidToken + " 푸시 메세지 실패!!!");
       }
     })
-  })
+  });
 }
 
 
