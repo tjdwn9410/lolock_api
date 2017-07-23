@@ -427,15 +427,19 @@ router.get('/outing-log/:phoneId', function(req, res, next) {
                         strangeFlag = 1;
                     }
                     var resTime = rows[i].time;
+                    var week = new Array('일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일');
+                    var today = new Date(resTime.substring(0,4)+'-'+resTime.substring(4, 6) * 1+'-'+resTime.substring(6, 8) * 1).getDay();
+                    var todayLabel = week[today];
                     var jsonObj = {
                         "name": resName,
                         "outFlag": rows[i].out_flag,
                         "strangeFlag": strangeFlag,
                         "outTime": {
-                            "month": resTime.substring(0, 2) * 1,
-                            "day": resTime.substring(2, 4) * 1,
-                            "hour": resTime.substring(4, 6) * 1,
-                            "min": resTime.substring(6, 8) * 1
+                            "month": resTime.substring(4, 6) * 1,
+                            "day": resTime.substring(6, 8) * 1,
+                            "hour": resTime.substring(8, 10) * 1,
+                            "min": resTime.substring(10, 12) * 1,
+                            "dayName" : todayLabel
                         }
                     }
                     jsonArray.push(jsonObj);
