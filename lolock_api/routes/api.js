@@ -244,7 +244,7 @@ router.post('/loradata', function(req, res, next) {
   console.log('\n');
 
   console.log("typeof content : " + typeof content);
-  if(content[0] == "3" && content[0] == "0")  // 누군가 나갈때
+  if(content[0] == "3" && content[1] == "0")  // 누군가 나갈때
   {
     console.log("누군가 나갈때 시작");
     // TODO : 각 핸드폰에 요청을 날리고 targetPhone을 찾아야한다.
@@ -282,11 +282,11 @@ router.post('/loradata', function(req, res, next) {
         }
       })
   }
-  else if(content[0] == "3" && content[0] == "1") // 누군가 들어올 떄
+  else if(content[0] == "3" && content[1] == "1") // 누군가 들어올 떄
   {
     console.log("누군가 들어올 때 시작");
   }
-  else if(content[0] == "3" && content[0] == "2") // 진동센서에 의해 불법침입이 감지될 때
+  else if(content[0] == "3" && content[1] == "2") // 진동센서에 의해 불법침입이 감지될 때
   {
     console.log("불법침입감지 시작");
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", LTID)
