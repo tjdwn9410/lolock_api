@@ -625,9 +625,9 @@ var sendPushMessage = function(androidToken, dataObj) {
       var bodyobj = eval("(" + response.body + ")");
       // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
       if (bodyobj.success === 1) {
-        resolve(androidToken + " 푸시 메세지 보내기 완료" + ", 내용 : " + options.body);
+        resolve(androidToken + " 푸시 메세지 보내기 완료" + ", 내용 : " + dataObj);
       } else {
-        reject(androidToken + " 푸시 메세지 실패!!!" + ", 내용 : " +  + options.body);
+        reject(androidToken + " 푸시 메세지 실패!!!" + ", 내용 : " +  + dataObj);
       }
     })
   })
