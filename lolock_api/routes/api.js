@@ -431,6 +431,7 @@ router.get('/outing-log/:phoneId', function(req, res, next) {
                     var today = new Date(resTime.substring(0,4)+'-'+resTime.substring(4, 6) * 1+'-'+resTime.substring(6, 8) * 1 + " "+resTime.substring(8, 10) * 1 +":"+resTime.substring(10, 12) * 1);
                     var todayLabel = week[today.getDay()];
                     console.log(today.getTime()+ " "+ resTime.substring(0,4)+'-'+resTime.substring(4, 6) * 1+'-'+resTime.substring(6, 8) * 1);
+                    console.log(new Date().getTime());
                     var jsonObj = {
                         "name": resName,
                         "outFlag": rows[i].out_flag,
@@ -441,7 +442,7 @@ router.get('/outing-log/:phoneId', function(req, res, next) {
                             "hour": resTime.substring(8, 10) * 1,
                             "min": resTime.substring(10, 12) * 1,
                             "dayName" : todayLabel,
-                            "tiemStamp" : new Date().getTime()-today.getTime()
+                            "timeStamp" : new Date().getTime()-today.getTime()
                         }
                     }
                     jsonArray.push(jsonObj);
