@@ -440,7 +440,11 @@ router.get('/outing-log/:phoneId', function(req, res, next) {
                     }
                     jsonArray.push(jsonObj);
                 }
-                res.json(jsonArray);
+                var jsonRes =
+                {
+                  "results" : jsonArray
+                }
+                res.json(jsonRes);
             }
         })
 });
