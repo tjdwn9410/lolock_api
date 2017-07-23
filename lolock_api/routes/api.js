@@ -241,7 +241,6 @@ router.post('/loradata', function(req, res, next) {
 
   console.log(content, lastModifiedTime); // content 2017-07-16T21:35:14+09:00
   console.log(LTID);
-  console.log('\n');
 
   console.log("typeof content : " + typeof content);
   if(content[0] == "3" && content[1] == "0")  // 누군가 나갈때
@@ -252,7 +251,7 @@ router.post('/loradata', function(req, res, next) {
     var targetPhone_id = ""
     var targetPersonName = "";
 
-    mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
+    mysql.query("SELECT id, aadr FROM lolock_devices WHERE device_id=?", LTID)
       .spread(function(rows) {
         console.log("lolock id : " + rows[0].id);
         return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
@@ -418,11 +417,14 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
   var LTID = "00000174d02544fffe" + req.params.LTID;
   var gps_lat;
   var gps_lon;
-  mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
+  var addr;
+  mysql.query("SELECT id, gps_lat, gps_lon, addr FROM lolock_devices WHERE device_id=?", LTID)
     .spread(function(rows) {
       console.log("id : " + rows[0].id + "device id : " + LTID);
       gps_lat = rows[0].gps_lat;
       gps_lon = rows[0].gps_lon;
+      var addrArr = rows[0].addr.split(' ');
+      addr = addrArr[1] + addrArr[2];
       return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
     })
     .spread(function(roommateRows) {
@@ -430,7 +432,7 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
       for (var j in roommateRows) {
         roommateTokenArray.push(roommateRows[j].phone_id);
       }
-      receiveWeatherInfo(gps_lon, gps_lat, moment().format('YYYY-MM-DDTHH:mm:ssZ'), res);
+      receiveWeatherInfo(gps_lon, gps_lat, addr, moment().format('YYYY-MM-DDTHH:mm:ssZ'), res);
     })
 })
 
@@ -499,7 +501,7 @@ router.get('/disposable-link/:linkId', function(req, res, next) {
 });
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
 // 경도       위도    날짜+시간
-var receiveWeatherInfo = function(gps_long, gps_lat, lastModifiedTime, responseToReq) {
+var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, responseToReq) {
   var dateArr = lastModifiedTime.split('T')[0].split('-');
   var timeArr = lastModifiedTime.split('T')[1].split(':');
   var date = dateArr[0] + dateArr[1] + dateArr[2];
@@ -555,7 +557,7 @@ var receiveWeatherInfo = function(gps_long, gps_lat, lastModifiedTime, responseT
     }
     request(options, function(error, response, body) {
       if(response.statusCode == 200){
-        weatherdataModifyRequiredData(body, forecastoptions, function(data){
+        weatherdataModifyRequiredData(body, addr, forecastoptions, function(data){
           responseToReq.send(JSON.stringify(data));
           console.log("날씨 response 성공");
         });
@@ -632,7 +634,7 @@ var sendPushMessage = function(androidToken, dataObj) {
 }
 
 
-var weatherdataModifyRequiredData = function(weatherData, forecastoptions, callback) {
+var weatherdataModifyRequiredData = function(weatherData, addr, forecastoptions, callback) {
   var time = moment().format().split('T')[1].split(':')[0];
   time += "00";
 
@@ -641,7 +643,9 @@ var weatherdataModifyRequiredData = function(weatherData, forecastoptions, callb
   var data = new Object();
   data.baseTime = weatherDataItemArray[0].baseTime;
   data.baseDate = weatherDataItemArray[0].baseDate;
-
+  data.probabilityRain = 0;
+  data.location = addr;
+  console.log("addr : " + data.location);
   for (var i in weatherDataItemArray) {
     if (weatherDataItemArray[i].category === "PTY") {
       data.pty = weatherDataItemArray[i].obsrValue;
@@ -679,7 +683,7 @@ var weatherdataModifyRequiredData = function(weatherData, forecastoptions, callb
         } else if (weatherDataItemArray[i].category === "TMX") {
           data.maxTemperature = weatherDataItemArray[i].fcstValue;
         }
-        if(weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstTime) < Number(time))
+        if(weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstValue) > data.probabilityRain)
           data.probabilityRain = weatherDataItemArray[i].fcstValue;
       }
       console.log("data : " + JSON.stringify(data));
