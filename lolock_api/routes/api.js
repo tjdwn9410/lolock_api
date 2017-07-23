@@ -614,6 +614,8 @@ var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, res
             url: GETuri,
             method: 'GET',
         }
+        if(Number(time) <= 100 )
+          date = moment(date).add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
         var GETforecasturi = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
         GETforecasturi += 'ServiceKey=Wl56iXQ3MjJdi%2FO2u34%2BThhi%2F6QDsxA68HvdZ8pZOSo9DlFlvunKzxO1IGUwB6jsSIuDIp8DGEHzvAnoNdgFCQ%3D%3D';
         GETforecasturi += '&base_date=' + date;
