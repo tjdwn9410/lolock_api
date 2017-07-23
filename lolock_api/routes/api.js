@@ -268,6 +268,7 @@ router.post('/checkout/:phone_id', function(req, res, next){
             });
         }
       }
+      res.send("ok");
     })
 })
 
