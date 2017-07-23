@@ -393,301 +393,301 @@ router.post('/register', function(req, res, next) {
 });
 
 
-출입 기록 관리
-router.get('/outing-log/:phoneId', function(req, res, next) {
-            var phoneId = req.params.phoneId;
-            var randomStr;
-            mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
-                .spread(function(rows) {
-                    console.log(rows);
-                    return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
-                })
-                .spread(function(rows) {
-                    console.log(rows);
-                    return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
-                })
-                .
-        }
+//출입 기록 관리
+// router.get('/outing-log/:phoneId', function(req, res, next) {
+//     var phoneId = req.params.phoneId;
+//     var randomStr;
+//     mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
+//         .spread(function(rows) {
+//             console.log(rows);
+//             return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
+//         })
+//         .spread(function(rows) {
+//             console.log(rows);
+//             return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
+//         })
+//         .
+// });
 
-        /* GET  */
-        router.get('/weatherdata/:LTID', function(req, res, next) {
-            var LTID = "00000174d02544fffe" + req.params.LTID;
-            var gps_lat;
-            var gps_lon;
-            var addr;
-            mysql.query("SELECT id, gps_lat, gps_lon, addr FROM lolock_devices WHERE device_id=?", LTID)
-                .spread(function(rows) {
-                    console.log("id : " + rows[0].id + "device id : " + LTID);
-                    gps_lat = rows[0].gps_lat;
-                    gps_lon = rows[0].gps_lon;
-                    var addrArr = rows[0].addr.split(' ');
-                    addr = addrArr[1] + " " + addrArr[2];
-                    return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
-                })
-                .spread(function(roommateRows) {
-                    var roommateTokenArray = new Array();
-                    for (var j in roommateRows) {
-                        roommateTokenArray.push(roommateRows[j].phone_id);
-                    }
-                    receiveWeatherInfo(gps_lon, gps_lat, addr, moment().format('YYYY-MM-DDTHH:mm:ssZ'), res);
-                })
+/* GET  */
+router.get('/weatherdata/:LTID', function(req, res, next) {
+    var LTID = "00000174d02544fffe" + req.params.LTID;
+    var gps_lat;
+    var gps_lon;
+    var addr;
+    mysql.query("SELECT id, gps_lat, gps_lon, addr FROM lolock_devices WHERE device_id=?", LTID)
+        .spread(function(rows) {
+            console.log("id : " + rows[0].id + "device id : " + LTID);
+            gps_lat = rows[0].gps_lat;
+            gps_lon = rows[0].gps_lon;
+            var addrArr = rows[0].addr.split(' ');
+            addr = addrArr[1] + " " + addrArr[2];
+            return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
         })
-
-        router.get('/open-url/:phoneId', function(req, res, next) {
-            var phoneId = req.params.phoneId;
-            var randomStr;
-            mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
-                .spread(function(rows) {
-                    console.log(rows);
-                    return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
-                })
-                .spread(function(rows) {
-                    console.log(rows);
-                    return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
-
-                })
-                .spread(function(rows) {
-                    console.log(rows);
-                    console.log();
-                    randomStr = Math.random().toString(36).substring(20);
-                    return mysql.query("INSERT INTO lolock_open_url (device_id,url) VALUES(?,?)", [rows[0].device_id, randomStr]);
-                })
-                .then(function() {
-                    res.json({
-                        code: 'CREATED',
-                        link: "http://13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
-                    });
-                })
-                .catch(function(err) {
-                    console.log(err);
-                    res.status(500);
-                    res.json({
-                        code: 'DB_ERR',
-                        message: '데이터베이스 에러'
-                    });
-                });
-        });
-
-        router.get('/disposable-link/:linkId', function(req, res, next) {
-            var linkId = req.params.linkId;
-            var device_id;
-            mysql.query("SELECT * FROM lolock_open_url WHERE url = ?", [linkId])
-                .spread(function(rows) {
-                    console.log(rows.length);
-                    if (rows.length == 0) {
-                        res.json({
-                            code: 'UNDEFINED',
-                            message: '존재하지 않는 주소'
-                        });
-                    } else {
-                        device_id = rows[0].device_id;
-                        return mysql.query("DELETE FROM lolock_open_url WHERE url = ?", [linkId]);
-                    }
-                })
-                .then(function() {
-                    sendControllMessage("1", device_id, res);
-                })
-                .catch(function(err) {
-                    console.log(err);
-                    res.status(500);
-                    res.json({
-                        code: 'DB_ERR',
-                        message: '데이터베이스 에러'
-                    });
-                });;
-        });
-
-        /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
-        // 경도       위도    날짜+시간
-        var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, responseToReq) {
-            var dateArr = lastModifiedTime.split('T')[0].split('-');
-            var timeArr = lastModifiedTime.split('T')[1].split(':');
-            var date = dateArr[0] + dateArr[1] + dateArr[2];
-            var time = Number(timeArr[0] + timeArr[1]);
-            time = time - (time % 100) - 100;
-
-            // TODO : 동기화 보장
-            if (time < 0) { // time이 00시--분이라면 하루 빼고 2300만들기
-                time = '2300'
-                date = moment(date).add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
-            } else { // 그 외
-                var tmp = '0000';
-                time += "";
-                tmp = tmp.substring(time.length);
-                tmp += time;
-                time = tmp;
+        .spread(function(roommateRows) {
+            var roommateTokenArray = new Array();
+            for (var j in roommateRows) {
+                roommateTokenArray.push(roommateRows[j].phone_id);
             }
-            console.log("date : " + date);
-            console.log("time : " + time);
-            child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr) {
-                if (error !== null) {
-                    console.log('exec error: ' + error);
-                }
-                var nx = stdout.split(' = ')[1].split(',')[0]; // '62, Y'
-                var ny = stdout.split(' = ')[2].split('\n')[0];
-                console.log("nx : " + nx + " ny : " + ny);
+            receiveWeatherInfo(gps_lon, gps_lat, addr, moment().format('YYYY-MM-DDTHH:mm:ssZ'), res);
+        })
+})
 
-                var GETuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastGrib?';
-                GETuri += 'ServiceKey=Wl56iXQ3MjJdi%2FO2u34%2BThhi%2F6QDsxA68HvdZ8pZOSo9DlFlvunKzxO1IGUwB6jsSIuDIp8DGEHzvAnoNdgFCQ%3D%3D';
-                GETuri += '&base_date=' + date;
-                GETuri += '&base_time=' + time;
-                GETuri += '&nx=' + nx;
-                GETuri += '&ny=' + ny;
-                GETuri += '&numOfRows=15';
-                GETuri += '&pageNo=1';
-                GETuri += '&_type=json';
-                var options = {
-                    url: GETuri,
-                    method: 'GET',
-                }
-                var GETforecasturi = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
-                GETforecasturi += 'ServiceKey=Wl56iXQ3MjJdi%2FO2u34%2BThhi%2F6QDsxA68HvdZ8pZOSo9DlFlvunKzxO1IGUwB6jsSIuDIp8DGEHzvAnoNdgFCQ%3D%3D';
-                GETforecasturi += '&base_date=' + date;
-                GETforecasturi += '&base_time=0200';
-                GETforecasturi += '&nx=' + nx;
-                GETforecasturi += '&ny=' + ny;
-                GETforecasturi += '&numOfRows=62';
-                GETforecasturi += '&pageNo=1';
-                GETforecasturi += '&_type=json';
-                var forecastoptions = {
-                    url: GETforecasturi,
-                    method: 'GET',
-                }
-                request(options, function(error, response, body) {
-                    if (response.statusCode == 200) {
-                        weatherdataModifyRequiredData(body, addr, forecastoptions, function(data) {
-                            responseToReq.send(JSON.stringify(data));
-                            console.log("날씨 response 성공");
-                        });
-                    } else {
-                        responseToReq.send("기상청 API 에러!")
-                    }
-                    // else if (flag === 0 && !error && response.statusCode == 200) {
-                    //   // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
-                    //   weatherdataModifyRequiredData(body, roommateTokenArray, forecastoptions, 0, sendPushMessageToRoommate)
-                    // }
-                });
-            })
-        };
-        // 푸시 메세지에 pushCode만 필요하고 나머진 필요 없으므로  /loradata 안에서 처리하기로 함
-        // var sendPushMessageToRoommate = function(roommateTokenArray) {
-        //   //for (var i in roommateTokenArray) {
-        //   var repeatPromise = function(cnt, callback) {
-        //     console.log("cnt : " + cnt);
-        //     if (cnt == roommateTokenArray.length) {
-        //       callback();
-        //       return;
-        //     }
-        //     if(roommateTokenArray[cnt] == ){    // 나간 사람 본인
-        //       var weatherPushData = {};
-        //       weatherPushData.pushCode = 0;
-        //       sendPushMessage(roommateTokenArray[cnt], weatherPushData)
-        //         .then(function(text) {
-        //           console.log(text)
-        //           repeatPromise(cnt + 1, callback);
-        //         }, function(err) {
-        //           console.log(err)
-        //           repeatPromise(cnt + 1, callback);
-        //         })
-        //     }
-        //     else{       // 본인 이외에는 누가 나갔다는 푸시메세지 보냄
-        //
-        //     }
-        //   }
-        //   var cnt = 0;
-        //   repeatPromise(cnt, function() {
-        //     console.log("보내기 끝");
-        //   })
-        // }
-        // TODO : data에 인덱스를 달아서 얘가 기상정보 push인지 누가 들어와서 로그를 남기는건지 알려줘야함
-        var sendPushMessage = function(androidToken, dataObj) {
-            return new Promise(function(resolve, reject) {
-                // TODO
-                var headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
-                }
-                var options = {
-                    url: 'https://fcm.googleapis.com/fcm/send',
-                    method: 'POST',
-                    headers: headers
-                }
-                var toAppBody = {}; // push 메세지 body
-                toAppBody.data = dataObj;
-                toAppBody.to = androidToken;
-                options.body = JSON.stringify(toAppBody);
-                // TODO : 동기화 할 것 promise 사용
-                request(options, function(error, response, body) {
-                    console.log(response.body);
-                    var bodyobj = eval("(" + response.body + ")");
-                    // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
-                    if (bodyobj.success === 1) {
-                        resolve(androidToken + " 푸시 메세지 보내기 완료" + ", 내용 : " + options.body);
-                    } else {
-                        reject(androidToken + " 푸시 메세지 실패!!!");
-                    }
-                })
-            })
-        }
+router.get('/open-url/:phoneId', function(req, res, next) {
+    var phoneId = req.params.phoneId;
+    var randomStr;
+    mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", [phoneId])
+        .spread(function(rows) {
+            console.log(rows);
+            return mysql.query("SELECT device_id FROM lolock_register WHERE user_id = ? ", [rows[0].id]);
+        })
+        .spread(function(rows) {
+            console.log(rows);
+            return mysql.query("SELECT device_id FROM lolock_devices WHERE id = ? ", [rows[0].device_id]);
 
-
-        var weatherdataModifyRequiredData = function(weatherData, addr, forecastoptions, callback) {
-            var time = moment().format().split('T')[1].split(':')[0];
-            time += "00";
-
-            var weatherDataobj = eval("(" + weatherData + ")");
-            var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
-            var data = new Object();
-            data.baseTime = weatherDataItemArray[0].baseTime;
-            data.baseDate = weatherDataItemArray[0].baseDate;
-            data.probabilityRain = 0;
-            data.location = addr;
-            console.log("addr : " + data.location);
-            for (var i in weatherDataItemArray) {
-                if (weatherDataItemArray[i].category === "PTY") {
-                    data.pty = weatherDataItemArray[i].obsrValue;
-                } else if (weatherDataItemArray[i].category === "SKY") {
-                    data.sky = weatherDataItemArray[i].obsrValue;
-                } else if (weatherDataItemArray[i].category === "T1H") {
-                    data.temperature = weatherDataItemArray[i].obsrValue;
-                }
-            }
-            if (data.pty == 0) {
-                if (data.sky == 1)
-                    data.sky = "맑음";
-                else if (data.sky == 2)
-                    data.sky = "구름조금"
-                else if (data.sky == 3)
-                    data.sky = "구름많음"
-                else if (data.sky == 4)
-                    data.sky = "흐림"
-            } else if (data.pty == 1)
-                data.sky = "비";
-            else if (data.pty == 2)
-                data.sky = "비와눈";
-            else if (data.pty == 3)
-                data.sky = "눈";
-            delete data.pty;
-
-            request(forecastoptions, function(error, response, body) {
-                if (response.statusCode == 200) {
-                    var weatherDataobj = eval("(" + body + ")");
-                    var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
-                    for (var i in weatherDataItemArray) {
-                        if (weatherDataItemArray[i].category === "TMN") {
-                            data.minTemperature = weatherDataItemArray[i].fcstValue;
-                        } else if (weatherDataItemArray[i].category === "TMX") {
-                            data.maxTemperature = weatherDataItemArray[i].fcstValue;
-                        }
-                        if (weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstValue) > data.probabilityRain)
-                            data.probabilityRain = weatherDataItemArray[i].fcstValue;
-                    }
-                    console.log("data : " + JSON.stringify(data));
-                    callback(data);
-                } else {
-                    console.log("기상청 API 에러!");
-                }
+        })
+        .spread(function(rows) {
+            console.log(rows);
+            console.log();
+            randomStr = Math.random().toString(36).substring(20);
+            return mysql.query("INSERT INTO lolock_open_url (device_id,url) VALUES(?,?)", [rows[0].device_id, randomStr]);
+        })
+        .then(function() {
+            res.json({
+                code: 'CREATED',
+                link: "http://13.124.94.67:10080/Thingplug/disposable-link/" + randomStr
             });
-        };
+        })
+        .catch(function(err) {
+            console.log(err);
+            res.status(500);
+            res.json({
+                code: 'DB_ERR',
+                message: '데이터베이스 에러'
+            });
+        });
+});
 
-        module.exports = router;
+router.get('/disposable-link/:linkId', function(req, res, next) {
+    var linkId = req.params.linkId;
+    var device_id;
+    mysql.query("SELECT * FROM lolock_open_url WHERE url = ?", [linkId])
+        .spread(function(rows) {
+            console.log(rows.length);
+            if (rows.length == 0) {
+                res.json({
+                    code: 'UNDEFINED',
+                    message: '존재하지 않는 주소'
+                });
+            } else {
+                device_id = rows[0].device_id;
+                return mysql.query("DELETE FROM lolock_open_url WHERE url = ?", [linkId]);
+            }
+        })
+        .then(function() {
+            sendControllMessage("1", device_id, res);
+        })
+        .catch(function(err) {
+            console.log(err);
+            res.status(500);
+            res.json({
+                code: 'DB_ERR',
+                message: '데이터베이스 에러'
+            });
+        });;
+});
+
+/* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
+// 경도       위도    날짜+시간
+var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, responseToReq) {
+    var dateArr = lastModifiedTime.split('T')[0].split('-');
+    var timeArr = lastModifiedTime.split('T')[1].split(':');
+    var date = dateArr[0] + dateArr[1] + dateArr[2];
+    var time = Number(timeArr[0] + timeArr[1]);
+    time = time - (time % 100) - 100;
+
+    // TODO : 동기화 보장
+    if (time < 0) { // time이 00시--분이라면 하루 빼고 2300만들기
+        time = '2300'
+        date = moment(date).add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
+    } else { // 그 외
+        var tmp = '0000';
+        time += "";
+        tmp = tmp.substring(time.length);
+        tmp += time;
+        time = tmp;
+    }
+    console.log("date : " + date);
+    console.log("time : " + time);
+    child = exec("../../a.out 0 " + gps_long + " " + gps_lat, function(error, stdout, stderr) {
+        if (error !== null) {
+            console.log('exec error: ' + error);
+        }
+        var nx = stdout.split(' = ')[1].split(',')[0]; // '62, Y'
+        var ny = stdout.split(' = ')[2].split('\n')[0];
+        console.log("nx : " + nx + " ny : " + ny);
+
+        var GETuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastGrib?';
+        GETuri += 'ServiceKey=Wl56iXQ3MjJdi%2FO2u34%2BThhi%2F6QDsxA68HvdZ8pZOSo9DlFlvunKzxO1IGUwB6jsSIuDIp8DGEHzvAnoNdgFCQ%3D%3D';
+        GETuri += '&base_date=' + date;
+        GETuri += '&base_time=' + time;
+        GETuri += '&nx=' + nx;
+        GETuri += '&ny=' + ny;
+        GETuri += '&numOfRows=15';
+        GETuri += '&pageNo=1';
+        GETuri += '&_type=json';
+        var options = {
+            url: GETuri,
+            method: 'GET',
+        }
+        var GETforecasturi = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
+        GETforecasturi += 'ServiceKey=Wl56iXQ3MjJdi%2FO2u34%2BThhi%2F6QDsxA68HvdZ8pZOSo9DlFlvunKzxO1IGUwB6jsSIuDIp8DGEHzvAnoNdgFCQ%3D%3D';
+        GETforecasturi += '&base_date=' + date;
+        GETforecasturi += '&base_time=0200';
+        GETforecasturi += '&nx=' + nx;
+        GETforecasturi += '&ny=' + ny;
+        GETforecasturi += '&numOfRows=62';
+        GETforecasturi += '&pageNo=1';
+        GETforecasturi += '&_type=json';
+        var forecastoptions = {
+            url: GETforecasturi,
+            method: 'GET',
+        }
+        request(options, function(error, response, body) {
+            if (response.statusCode == 200) {
+                weatherdataModifyRequiredData(body, addr, forecastoptions, function(data) {
+                    responseToReq.send(JSON.stringify(data));
+                    console.log("날씨 response 성공");
+                });
+            } else {
+                responseToReq.send("기상청 API 에러!")
+            }
+            // else if (flag === 0 && !error && response.statusCode == 200) {
+            //   // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
+            //   weatherdataModifyRequiredData(body, roommateTokenArray, forecastoptions, 0, sendPushMessageToRoommate)
+            // }
+        });
+    })
+};
+// 푸시 메세지에 pushCode만 필요하고 나머진 필요 없으므로  /loradata 안에서 처리하기로 함
+// var sendPushMessageToRoommate = function(roommateTokenArray) {
+//   //for (var i in roommateTokenArray) {
+//   var repeatPromise = function(cnt, callback) {
+//     console.log("cnt : " + cnt);
+//     if (cnt == roommateTokenArray.length) {
+//       callback();
+//       return;
+//     }
+//     if(roommateTokenArray[cnt] == ){    // 나간 사람 본인
+//       var weatherPushData = {};
+//       weatherPushData.pushCode = 0;
+//       sendPushMessage(roommateTokenArray[cnt], weatherPushData)
+//         .then(function(text) {
+//           console.log(text)
+//           repeatPromise(cnt + 1, callback);
+//         }, function(err) {
+//           console.log(err)
+//           repeatPromise(cnt + 1, callback);
+//         })
+//     }
+//     else{       // 본인 이외에는 누가 나갔다는 푸시메세지 보냄
+//
+//     }
+//   }
+//   var cnt = 0;
+//   repeatPromise(cnt, function() {
+//     console.log("보내기 끝");
+//   })
+// }
+// TODO : data에 인덱스를 달아서 얘가 기상정보 push인지 누가 들어와서 로그를 남기는건지 알려줘야함
+var sendPushMessage = function(androidToken, dataObj) {
+    return new Promise(function(resolve, reject) {
+        // TODO
+        var headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
+        }
+        var options = {
+            url: 'https://fcm.googleapis.com/fcm/send',
+            method: 'POST',
+            headers: headers
+        }
+        var toAppBody = {}; // push 메세지 body
+        toAppBody.data = dataObj;
+        toAppBody.to = androidToken;
+        options.body = JSON.stringify(toAppBody);
+        // TODO : 동기화 할 것 promise 사용
+        request(options, function(error, response, body) {
+            console.log(response.body);
+            var bodyobj = eval("(" + response.body + ")");
+            // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
+            if (bodyobj.success === 1) {
+                resolve(androidToken + " 푸시 메세지 보내기 완료" + ", 내용 : " + options.body);
+            } else {
+                reject(androidToken + " 푸시 메세지 실패!!!");
+            }
+        })
+    })
+}
+
+
+var weatherdataModifyRequiredData = function(weatherData, addr, forecastoptions, callback) {
+    var time = moment().format().split('T')[1].split(':')[0];
+    time += "00";
+
+    var weatherDataobj = eval("(" + weatherData + ")");
+    var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
+    var data = new Object();
+    data.baseTime = weatherDataItemArray[0].baseTime;
+    data.baseDate = weatherDataItemArray[0].baseDate;
+    data.probabilityRain = 0;
+    data.location = addr;
+    console.log("addr : " + data.location);
+    for (var i in weatherDataItemArray) {
+        if (weatherDataItemArray[i].category === "PTY") {
+            data.pty = weatherDataItemArray[i].obsrValue;
+        } else if (weatherDataItemArray[i].category === "SKY") {
+            data.sky = weatherDataItemArray[i].obsrValue;
+        } else if (weatherDataItemArray[i].category === "T1H") {
+            data.temperature = weatherDataItemArray[i].obsrValue;
+        }
+    }
+    if (data.pty == 0) {
+        if (data.sky == 1)
+            data.sky = "맑음";
+        else if (data.sky == 2)
+            data.sky = "구름조금"
+        else if (data.sky == 3)
+            data.sky = "구름많음"
+        else if (data.sky == 4)
+            data.sky = "흐림"
+    } else if (data.pty == 1)
+        data.sky = "비";
+    else if (data.pty == 2)
+        data.sky = "비와눈";
+    else if (data.pty == 3)
+        data.sky = "눈";
+    delete data.pty;
+
+    request(forecastoptions, function(error, response, body) {
+        if (response.statusCode == 200) {
+            var weatherDataobj = eval("(" + body + ")");
+            var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
+            for (var i in weatherDataItemArray) {
+                if (weatherDataItemArray[i].category === "TMN") {
+                    data.minTemperature = weatherDataItemArray[i].fcstValue;
+                } else if (weatherDataItemArray[i].category === "TMX") {
+                    data.maxTemperature = weatherDataItemArray[i].fcstValue;
+                }
+                if (weatherDataItemArray[i].category === "POP" && Number(weatherDataItemArray[i].fcstValue) > data.probabilityRain)
+                    data.probabilityRain = weatherDataItemArray[i].fcstValue;
+            }
+            console.log("data : " + JSON.stringify(data));
+            callback(data);
+        } else {
+            console.log("기상청 API 에러!");
+        }
+    });
+};
+
+module.exports = router;
