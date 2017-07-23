@@ -688,6 +688,7 @@ var sendPushMessage = function(androidToken, dataObj) {
         reject(androidToken + " 푸시 메세지 실패!!!");
       }
     })
+  })
 }
 
 
