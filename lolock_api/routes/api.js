@@ -246,25 +246,34 @@ router.post('/loradata', function(req, res, next) {
   console.log('\n');
 
   console.log("typeof content : " + typeof content);
-  console.log(content[0]);
-  console.log(content[1]);
-  console.log(content[2]);
-  console.log(content[3]);
-  mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
-    .spread(function(rows) {
-      console.log(rows[0].id);
-      gps_lat = rows[0].gps_lat;
-      gps_lon = rows[0].gps_lon;
-      return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
-    })
-    .spread(function(roomateRows) {
-      // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
-      var roomateTokenArray = new Array();
-      for (var j in roomateRows) {
-        roomateTokenArray.push(roomateRows[j].phone_id);
-      }
-      //receiveWeatherInfo(roomateTokenArray, gps_lon, gps_lat, lastModifiedTime, 0);
-    })
+  if(content[0] == "3" && content[0] == "0")  // 누군가 나갈때
+  {
+    mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
+      .spread(function(rows) {
+        console.log("lolock id : " + rows[0].id);
+        gps_lat = rows[0].gps_lat;
+        gps_lon = rows[0].gps_lon;
+        return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
+      })
+      .spread(function(roommateRows) {
+        // TODO : 안에서 바로 토큰 받아서 푸시 메세지 날려야한다.
+        var roommateTokenArray = new Array();
+        for (var j in roommateRows) {
+          roommateTokenArray.push(roommateRows[j].phone_id);
+          console.log("roommate phone_id" + roommateRows[j].phone_id);
+        }
+        (roommateTokenArray, gps_lon, gps_lat, lastModifiedTime, 0);
+      })
+  }
+  else if(content[0] == "3" && content[0] == "1") // 누군가 들어올 떄
+  {
+
+  }
+  else if(content[0] == "3" && content[0] == "2") // 진동센서에 의해 불법침입이 감지될 때
+  {
+
+  }
+
   /* 위 테스트 중 DB 접근하면 안됌
 
     // TODO : if content가 불법침입이라면..
@@ -379,12 +388,12 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
       gps_lon = rows[0].gps_lon;
       return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
     })
-    .spread(function(roomateRows) {
-      var roomateTokenArray = new Array();
-      for (var j in roomateRows) {
-        roomateTokenArray.push(roomateRows[j].phone_id);
+    .spread(function(roommateRows) {
+      var roommateTokenArray = new Array();
+      for (var j in roommateRows) {
+        roommateTokenArray.push(roommateRows[j].phone_id);
       }
-      receiveWeatherInfo(roomateTokenArray, gps_lon, gps_lat, moment().format('YYYY-MM-DDTHH:mm:ssZ'), 1, res);
+      receiveWeatherInfo(roommateTokenArray, gps_lon, gps_lat, moment().format('YYYY-MM-DDTHH:mm:ssZ'), 1, res);
     })
 })
 
@@ -453,7 +462,7 @@ router.get('/disposable-link/:linkId', function(req, res, next) {
 });
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
 // 경도       위도    날짜+시간
-var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModifiedTime, flag, responseToReq) {
+var receiveWeatherInfo = function(roommateTokenArray, gps_long, gps_lat, lastModifiedTime, flag, responseToReq) {
   var dateArr = lastModifiedTime.split('T')[0].split('-');
   var timeArr = lastModifiedTime.split('T')[1].split(':');
   var date = dateArr[0] + dateArr[1] + dateArr[2];
@@ -509,28 +518,28 @@ var receiveWeatherInfo = function(roomateTokenArray, gps_long, gps_lat, lastModi
     }
     request(options, function(error, response, body) {
       if(flag === 1 && response.statusCode == 200){
-        weatherdataModifyRequiredData(body, roomateTokenArray, forecastoptions, 1, function(data){
+        weatherdataModifyRequiredData(body, roommateTokenArray, forecastoptions, 1, function(data){
           responseToReq.send(JSON.stringify(data));
           console.log("날씨 response 성공");
         });
       }
       else if (flag === 0 && !error && response.statusCode == 200) {
         // TODO : fcm연결 서버에 각 토큰마다 RequiredData 전송 동기화 보장!!!!! 콜백함수 사용하기
-        weatherdataModifyRequiredData(body, roomateTokenArray, forecastoptions, 0, sendPushMessageToRoommate)
+        weatherdataModifyRequiredData(body, roommateTokenArray, forecastoptions, 0, sendPushMessageToRoommate)
       }
     });
   })
 };
 
-var sendPushMessageToRoommate = function(roomateTokenArray ,weatherRequiredData) {
-  //for (var i in roomateTokenArray) {
+var sendPushMessageToRoommate = function(roommateTokenArray ,weatherRequiredData) {
+  //for (var i in roommateTokenArray) {
   var repeatPromise = function(cnt, callback) {
     console.log("cnt : " + cnt);
-    if (cnt == roomateTokenArray.length) {
+    if (cnt == roommateTokenArray.length) {
       callback();
       return;
     }
-    sendPushMessage(roomateTokenArray[cnt], weatherRequiredData)
+    sendPushMessage(roommateTokenArray[cnt], weatherRequiredData)
       .then(function(text) {
         console.log(text)
         repeatPromise(cnt + 1, callback);
@@ -576,10 +585,7 @@ var sendPushMessage = function(androidToken, dataObj) {
 }
 
 
-var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, forecastoptions, flag, callback) {
-  var PTYItem = {}; // 강수 형태  / 0 : 없음 / 1 : 비 / 2: 비/눈 / 3 : 눈
-  var SKYItem = {}; // 하늘 상태  / 1 : 맑음 / 2: 구름 조금 / 3: 구름 많음 / 4 : 흐림
-  var T1HItem = {}; // 1시간 기온 / 온도로 나옴
+var weatherdataModifyRequiredData = function(weatherData, roommateTokenArray, forecastoptions, flag, callback) {
   var time = moment().format().split('T')[1].split(':')[0];
   time += "00";
 
@@ -631,7 +637,7 @@ var weatherdataModifyRequiredData = function(weatherData, roomateTokenArray, for
       }
       console.log("data : " + JSON.stringify(data));
       if(flag === 0)
-        callback(roomateTokenArray, data);
+        callback(roommateTokenArray, data);
       else if(flag === 1){
         callback(data);
       }
