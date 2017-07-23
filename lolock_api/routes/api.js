@@ -231,6 +231,45 @@ router.put('/remotetest', function(req, res, next) {
   });
 });
 
+/* POST 핸드폰에서 자신이 나갔다고 서버에 로그 등록을 요청 */
+router.post('/checkout/:phone_id', function(req, res, next){
+  console.log(req.params.phone_id + "가 나갔음")
+  mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", req.params.phone_id)
+    .spread(function(idrows){
+      return mysql.query("SELECT * FROM lolock_register AS R LEFT JOIN lolock_users AS U ON R.user_id = U.id  WHERE R.device_id = (SELECT device_id FROM lolock_register WHERE user_id = ?)", idrows[0].id)
+    })
+    .spread(function(roommateRows){
+      for (var j in roommateRows) {
+        var pushData = {}
+        if(roommateRows[j].phone_id == req.params.phone_id){
+          pushData.pushCode = "0";
+          sendPushMessage(roommateRows[j].phone_id, pushData)
+            .then(function(text) {
+              console.log(text)
+            }, function(err) {
+              console.log(err)
+            });
+          var timeArr = moment().format().split('T');
+          var dateArr = timeArr[0].split('-');
+          var timeArr = timeArr[1].split(':');
+          var time = dateArr[0]+dateArr[1]+dateArr[2]+timeArr[0]+timeArr[1];   // 201707232325
+          console.log(roommateRows[j].device_id + " " + roommateRows[j].user_id + " " + time + " " + 1);
+          mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)",roommateRows[j].device_id, roommateRows[j].user_id, time, 1);
+        }
+        else{
+          pushData.pushCode = "1";
+          pushData.message = targetPersonName + "님이 나갔습니다."
+          sendPushMessage(roommateRows[j].phone_id, pushData)
+            .then(function(text) {
+              console.log(text)
+            }, function(err) {
+              console.log(err)
+            });
+        }
+      }
+    })
+})
+
 /* POST loRa subscribe한 데이터 전달받는다.*/
 router.post('/loradata', function(req, res, next) {
   var notificationMessage = req.body['m2m:cin'];
@@ -246,12 +285,7 @@ router.post('/loradata', function(req, res, next) {
   if(content[0] == "3" && content[1] == "0")  // 누군가 나갈때
   {
     console.log("누군가 나갈때 시작");
-    // TODO : 각 핸드폰에 요청을 날리고 targetPhone을 찾아야한다.
-    // 나중에 입력해야함
-    var targetPhone_id = ""
-    var targetPersonName = "";
-
-    mysql.query("SELECT id, aadr FROM lolock_devices WHERE device_id=?", LTID)
+    mysql.query("SELECT id, addr FROM lolock_devices WHERE device_id=?", LTID)
       .spread(function(rows) {
         console.log("lolock id : " + rows[0].id);
         return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
@@ -259,26 +293,14 @@ router.post('/loradata', function(req, res, next) {
       .spread(function(roommateRows) {
         for (var j in roommateRows) {
           var pushData = {}
-          if(roommateRows[j].phone_id == targetPhone_id){
-            pushData.pushCode = "0";
-            sendPushMessage(roommateRows[j].phone_id, pushData)
-              .then(function(text) {
-                console.log(text)
-               }, function(err) {
-                 console.log(err)
-               });
+          pushData.pushCode = "3";
+          sendPushMessage(roommateRows[j].phone_id, pushData)
+            .then(function(text) {
+              console.log(text)
+            }, function(err) {
+              console.log(err)
+            });
           }
-          else{
-            pushData.pushCode = "1";
-            pushData.message = targetPersonName + "님이 나갔습니다."
-            sendPushMessage(roommateRows[j].phone_id, pushData)
-              .then(function(text) {
-                console.log(text)
-               }, function(err) {
-                 console.log(err)
-               });
-          }
-        }
       })
   }
   else if(content[0] == "3" && content[1] == "1") // 누군가 들어올 떄
@@ -625,9 +647,9 @@ var sendPushMessage = function(androidToken, dataObj) {
       var bodyobj = eval("(" + response.body + ")");
       // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
       if (bodyobj.success === 1) {
-        resolve(androidToken + " 푸시 메세지 보내기 완료" + ", 내용 : " + JSON.stringify(toAppBody));
+        resolve(androidToken + " 푸시 메세지 보내기 완료");
       } else {
-        reject(androidToken + " 푸시 메세지 실패!!!" + ", 내용 : " +  + JSON.stringify(toAppBody));
+        reject(androidToken + " 푸시 메세지 실패!!!");
       }
     })
   })
