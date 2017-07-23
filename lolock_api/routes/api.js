@@ -287,14 +287,6 @@ router.post('/loradata', function(req, res, next) {
   if(content[0] == "3" && content[1] == "0")  // 누군가 나갈때
   {
     console.log("누군가 나갈때 시작");
-<<<<<<< HEAD
-=======
-    // TODO : 각 핸드폰에 요청을 날리고 targetPhone을 찾아야한다.
-    // 나중에 입력해야함
-    var targetPhone_id = ""
-    var targetPersonName = "";
-
->>>>>>> fdb9b8185d34232cefe431ab928b596b915bd0ce
     mysql.query("SELECT id, addr FROM lolock_devices WHERE device_id=?", LTID)
       .spread(function(rows) {
         console.log("lolock id : " + rows[0].id);
