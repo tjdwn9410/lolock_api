@@ -424,7 +424,7 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
       gps_lat = rows[0].gps_lat;
       gps_lon = rows[0].gps_lon;
       var addrArr = rows[0].addr.split(' ');
-      addr = addrArr[1] + addrArr[2];
+      addr = addrArr[1] + " " + addrArr[2];
       return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
     })
     .spread(function(roommateRows) {
