@@ -306,7 +306,7 @@ router.post('/loradata', function(req, res, next) {
              }, function(err) {
                console.log(err)
              });
-          console.log("roommate phone_id" + roommateRows[j].phone_id);
+          console.log("roommate phone_id : " + roommateRows[j].phone_id);
         }
       })
   }
@@ -420,7 +420,7 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
   var gps_lon;
   mysql.query("SELECT id, gps_lat, gps_lon FROM lolock_devices WHERE device_id=?", LTID)
     .spread(function(rows) {
-      console.log(rows[0].id);
+      console.log("id : " + rows[0].id + "device id : " + LTID);
       gps_lat = rows[0].gps_lat;
       gps_lon = rows[0].gps_lon;
       return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
@@ -623,9 +623,9 @@ var sendPushMessage = function(androidToken, dataObj) {
       var bodyobj = eval("(" + response.body + ")");
       // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
       if (bodyobj.success === 1) {
-        resolve(androidToken + "보내기 완료" + ", 내용 : " + options.body);
+        resolve(androidToken + " 푸시 메세지 보내기 완료" + ", 내용 : " + options.body);
       } else {
-        reject(androidToken + "실패!!!");
+        reject(androidToken + " 푸시 메세지 실패!!!");
       }
     })
   })
