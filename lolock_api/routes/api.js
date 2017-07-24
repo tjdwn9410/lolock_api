@@ -795,9 +795,9 @@ var weatherdataModifyRequiredData = function(weatherData, addr, forecastoptions,
     delete data.pty;
 
     request(forecastoptions, function(error, response, body) {
+      var weatherDataobj = eval("(" + body + ")");
         if (response.statusCode == 200) {
           if(weatherDataobj['response']['header']['resultCode'] == "0000"){
-            var weatherDataobj = eval("(" + body + ")");
             var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
             for (var i in weatherDataItemArray) {
                 if (weatherDataItemArray[i].category === "TMN") {
