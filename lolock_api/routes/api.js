@@ -612,7 +612,7 @@ router.get('/disposable-link/:linkId', function(req, res, next) {
             }
         })
         .then(function() {
-            sendControllMessage("1", device_id, res);
+            sendControllMessage("26", device_id, res);
         })
         .catch(function(err) {
             console.log(err);
