@@ -606,22 +606,23 @@ router.get('/disposable-link/:linkId', function(req, res, next) {
                     code: 'UNDEFINED',
                     message: '존재하지 않는 주소'
                 });
-            } else {
+            }
+            else {
                 device_id = rows[0].device_id;
-                return mysql.query("DELETE FROM lolock_open_url WHERE url = ?", [linkId]);
+                mysql.query("DELETE FROM lolock_open_url WHERE url = ?", [linkId])
+                .then(function() {
+                    sendControllMessage("26", device_id, res);
+                })
+                .catch(function(err) {
+                    console.log(err);
+                    res.status(500);
+                    res.json({
+                        code: 'DB_ERR',
+                        message: '데이터베이스 에러'
+                    });
+                });
             }
         })
-        .then(function() {
-            sendControllMessage("26", device_id, res);
-        })
-        .catch(function(err) {
-            console.log(err);
-            res.status(500);
-            res.json({
-                code: 'DB_ERR',
-                message: '데이터베이스 에러'
-            });
-        });;
 });
 
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
