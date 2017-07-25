@@ -663,7 +663,7 @@ var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, res
             url: GETuri,
             method: 'GET',
         }
-        if(Number(time) <= 100 )
+        if(Number(time) <= 100 && timeArr[1] < 10)
           date = moment(date).add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
         var GETforecasturi = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
         GETforecasturi += 'ServiceKey=Wl56iXQ3MjJdi%2FO2u34%2BThhi%2F6QDsxA68HvdZ8pZOSo9DlFlvunKzxO1IGUwB6jsSIuDIp8DGEHzvAnoNdgFCQ%3D%3D';
@@ -795,9 +795,9 @@ var weatherdataModifyRequiredData = function(weatherData, addr, forecastoptions,
     delete data.pty;
 
     request(forecastoptions, function(error, response, body) {
+      var weatherDataobj = eval("(" + body + ")");
         if (response.statusCode == 200) {
           if(weatherDataobj['response']['header']['resultCode'] == "0000"){
-            var weatherDataobj = eval("(" + body + ")");
             var weatherDataItemArray = weatherDataobj['response']['body']['items']['item'];
             for (var i in weatherDataItemArray) {
                 if (weatherDataItemArray[i].category === "TMN") {
