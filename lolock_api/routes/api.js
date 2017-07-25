@@ -11,7 +11,6 @@ var FCM = require('fcm-push');
 mysql.configure(mysqlConfig);
 var moment = require('moment');
 var multer = require('multer');
-var upload = multer({dest : 'uploads/'})
 
 router.use(function(res, req, next){
   console.log(moment().format());
@@ -29,9 +28,6 @@ router.use(function(res, req, next){
    6. TODO : 동거인이 추가될 때 마다 lolock에 블루투스 address?를 전송해야함(첫 기기등록시에도)
 */
 
-router.post('/upload', upload.single('avatar'), function(req, res){
-  res.send('Uploaded' + req.file);
-})
 
 //디바이스 controll Module 실행시킬 명령 code와 호출한 곳의 res를 인자로 넘겨준다.
 function sendControllMessage(code, device_id, res) {
