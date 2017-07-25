@@ -10,7 +10,6 @@ var mysqlConfig = require('../config/db_config.json');
 var FCM = require('fcm-push');
 mysql.configure(mysqlConfig);
 var moment = require('moment');
-var multer = require('multer');
 
 router.use(function(res, req, next){
   console.log(moment().format());
