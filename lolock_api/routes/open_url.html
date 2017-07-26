@@ -1,0 +1,60 @@
+<html>
+<head>
+ <link href="https://fonts.googleapis.com/css?family=Lobster" rel="stylesheet">
+  <style>
+    .btn{
+      text-decoration: none;
+      font-size:2rem;
+      color:white;
+      padding:10px 20px 10px 20px;
+      margin:20px;
+      display:inline-block;
+      border-radius: 10px;
+      transition:all 0.1s;
+      text-shadow: 0px -2px rgba(0, 0, 0, 0.44);
+      font-family: 'Lobster', cursive;
+    }
+    .btn:active{
+      transform: translateY(3px);
+    }
+    .btn.blue{
+      background-color: #1f75d9;
+      border-bottom:5px solid #165195;
+    }
+    .btn.blue:active{
+      border-bottom:2px solid #165195;
+    }
+  </style>
+</head>
+<body>
+  <div id = "img">
+    <img src="http://i.imgur.com/NzU4eDF.jpg" height="300" alt="산 이미지">
+  </div>
+  <input type='button' class="btn blue" id="button">blue</a>
+  <script>
+  var currentAdd = location.href;
+document.querySelector('input').addEventListener('click', function(event){
+    var xhr = new XMLHttpRequest();
+    xhr.open('DELETE', currentAdd);
+    xhr.onreadystatechange = function(){
+        if(xhr.readyState === 4 && xhr.status === 200){
+            var resJson = JSON.parse(xhr.responseText);
+            if(resJson.code == "SUCCESS"){
+            	var _str = '';
+            	_str = '<img src=\"http:\/\/i.imgur.com\/B2JM0tl.jpg\" height=\"300\" alt=\"산이미지\">';
+            	_str += '<br><h1>'+resJson+'</h1>';
+            	document.querySelector('#timezones').innerHTML = _str;
+            }
+            else{
+            	var _str = '';
+            	_str = '<img src=\"http:\/\/i.imgur.com\/CpWuaTq.jpg\" height=\"300\" alt=\"산이미지\">';
+            	_str += '<br><h1>'+resJson+'</h1>';
+            	document.querySelector('#timezones').innerHTML = _str;
+            }
+        }
+    }
+    xhr.send(); 
+}); 
+</script>
+</body>
+</html>
