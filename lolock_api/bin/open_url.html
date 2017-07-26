@@ -38,7 +38,6 @@
   var openEvent = document.getElementById('openImg');
   var currentAdd = location.href;
   openEvent.addEventListener('click', function(event){
-    alert("hello world");
     var xhr = new XMLHttpRequest();
     xhr.open('DELETE', currentAdd);
     xhr.onreadystatechange = function(){
