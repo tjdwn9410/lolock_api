@@ -42,13 +42,13 @@ document.querySelector('input').addEventListener('click', function(event){
             if(resJson.code == "SUCCESS"){
             	var _str = '';
             	_str = '<img src=\"http:\/\/i.imgur.com\/B2JM0tl.jpg\" height=\"300\" alt=\"산이미지\">';
-            	_str += '<br><h1>'+resJson+'</h1>';
+            	_str += '<br><h1>'+JSON.stringify(resJson)+'</h1>';
             	document.querySelector('#img').innerHTML = _str;
             }
             else{
             	var _str = '';
             	_str = '<img src=\"http:\/\/i.imgur.com\/CpWuaTq.jpg\" height=\"300\" alt=\"산이미지\">';
-            	_str += '<br><h1>'+resJson+'</h1>';
+            	_str += '<br><h1>'+JSON.stringify(resJson)+'</h1>';
             	document.querySelector('#img').innerHTML = _str;
             }
         }
