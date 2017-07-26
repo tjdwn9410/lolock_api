@@ -1,39 +1,44 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
- <link href="https://fonts.googleapis.com/css?family=Lobster" rel="stylesheet">
+  <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>원격 문 열림</title>
+  <link href="https://fonts.googleapis.com/css?family=Lobster" rel="stylesheet">
   <style>
-    .btn{
-      text-decoration: none;
-      font-size:2rem;
-      color:white;
-      padding:10px 20px 10px 20px;
-      margin:20px;
-      display:inline-block;
-      border-radius: 10px;
-      transition:all 0.1s;
-      text-shadow: 0px -2px rgba(0, 0, 0, 0.44);
-      font-family: 'Lobster', cursive;
-    }
-    .btn:active{
-      transform: translateY(3px);
-    }
-    .btn.blue{
-      background-color: #1f75d9;
-      border-bottom:5px solid #165195;
-    }
-    .btn.blue:active{
-      border-bottom:2px solid #165195;
-    }
+  @media (max-width: 760px) {
+            .container {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            }
+            .container .main-img {
+              flex:7;
+              border-radius: 70px;
+            }
+            .main-text {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              flex:3;
+              font-size: 24px;
+              margin-top: 14px;
+            }
+        }
   </style>
 </head>
 <body>
-  <div id = "img">
-    <img src="http://i.imgur.com/NzU4eDF.jpg" height="300" alt="산 이미지">
+  <div class = "container">
+    <img src="http://i.imgur.com/TqtBCqr.jpg" height="300" id="openImg" class="main-img">
   </div>
-  <input type='button' class="btn blue" id="button" value="execute">
+  <div class="main-text">
+       이미지를 클릭하면 문이 열립니다.
+  </div>
   <script>
+  var openEvent = document.getElementById('openImg');
   var currentAdd = location.href;
-document.querySelector('input').addEventListener('click', function(event){
+  openEvent.addEventListener('click', function(event){
+    alert("hello world");
     var xhr = new XMLHttpRequest();
     xhr.open('DELETE', currentAdd);
     xhr.onreadystatechange = function(){
@@ -41,20 +46,17 @@ document.querySelector('input').addEventListener('click', function(event){
             var resJson = JSON.parse(xhr.responseText);
             if(resJson.code == "SUCCESS"){
             	var _str = '';
-            	_str = '<img src=\"http:\/\/i.imgur.com\/B2JM0tl.jpg\" height=\"300\" alt=\"산이미지\">';
-            	_str += '<br><h1>'+JSON.stringify(resJson)+'</h1>';
-            	document.querySelector('#img').innerHTML = _str;
+            	_str = '<img src=\"http:\/\/i.imgur.com\/TWUMQxj.jpg\" height=\"300\" alt=\"산이미지\" class=\"main-img\">';
+            	document.querySelector('.container').innerHTML = _str;
+              document.querySelector('.main-text').innerHTML = "문이 열렸습니다! 확인해 주세요.";
             }
             else{
-            	var _str = '';
-            	_str = '<img src=\"http:\/\/i.imgur.com\/CpWuaTq.jpg\" height=\"300\" alt=\"산이미지\">';
-            	_str += '<br><h1>'+JSON.stringify(resJson)+'</h1>';
-            	document.querySelector('#img').innerHTML = _str;
+              document.querySelector('.main-text').innerHTML = "오류로 인해 문이 열리지 않았습니다.";
             }
         }
     }
     xhr.send(); 
-}); 
+  }); 
 </script>
 </body>
 </html>
