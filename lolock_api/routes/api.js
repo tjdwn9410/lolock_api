@@ -626,7 +626,7 @@ router.delete('/disposable-link/:linkId', function(req, res, next){
 })
 
 router.get('/disposable-link/:linkId', function(req, res, next) {
-    res.sendFile('../routes/open_url.html');
+    res.sendFile('open_url.html');
 });
 
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
