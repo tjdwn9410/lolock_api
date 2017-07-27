@@ -626,10 +626,10 @@ router.delete('/disposable-link/:linkId', function(req, res, next) {
                         .spread(function(rows){
                           return mysql.query("INSERT INTO lolock_logs (device_id, time, out_flag) VALUES (?,?,?)", [rows[0].id, time, 1]);
                         })
-                        .catch(function(err)){
+                        .catch(function(err){
                           console.log(err);
                           console.log("임시키 로그 등록 실패");
-                        }
+                        })
                     })
                     .catch(function(err) {
                         console.log(err);
