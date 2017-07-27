@@ -11,6 +11,10 @@ var FCM = require('fcm-push');
 mysql.configure(mysqlConfig);
 var moment = require('moment');
 
+router.use(function(res, req, next){
+  console.log(moment().format());
+  next();
+})
 
 /*
    전제 조건
@@ -191,7 +195,7 @@ router.put('/remote-open', function(req, res, next) {
         })
         .spread(function(rows) {
             console.log(rows);
-            sendControllMessage("1", rows[0].device_id, res);
+            sendControllMessage("26", rows[0].device_id, res);
         })
 })
 
@@ -591,33 +595,38 @@ router.get('/open-url/:phoneId', function(req, res, next) {
         });
 });
 
+router.delete('/disposable-link/:linkId', function(req, res, next){
+  var linkId = req.params.linkId;
+  var device_id;
+  mysql.query("SELECT * FROM lolock_open_url WHERE url = ?", [linkId])
+      .spread(function(rows) {
+          console.log(rows.length);
+          if (rows.length == 0) {
+              res.json({
+                  code: 'UNDEFINED',
+                  message: '존재하지 않는 주소'
+              });
+          }
+          else {
+              device_id = rows[0].device_id;
+              mysql.query("DELETE FROM lolock_open_url WHERE url = ?", [linkId])
+              .then(function() {
+                  sendControllMessage("26", device_id, res);
+              })
+              .catch(function(err) {
+                  console.log(err);
+                  res.status(500);
+                  res.json({
+                      code: 'DB_ERR',
+                      message: '데이터베이스 에러'
+                  });
+              });
+          }
+      })
+})
+
 router.get('/disposable-link/:linkId', function(req, res, next) {
-    var linkId = req.params.linkId;
-    var device_id;
-    mysql.query("SELECT * FROM lolock_open_url WHERE url = ?", [linkId])
-        .spread(function(rows) {
-            console.log(rows.length);
-            if (rows.length == 0) {
-                res.json({
-                    code: 'UNDEFINED',
-                    message: '존재하지 않는 주소'
-                });
-            } else {
-                device_id = rows[0].device_id;
-                return mysql.query("DELETE FROM lolock_open_url WHERE url = ?", [linkId]);
-            }
-        })
-        .then(function() {
-            sendControllMessage("1", device_id, res);
-        })
-        .catch(function(err) {
-            console.log(err);
-            res.status(500);
-            res.json({
-                code: 'DB_ERR',
-                message: '데이터베이스 에러'
-            });
-        });;
+    res.sendfile('open_url.html');
 });
 
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
