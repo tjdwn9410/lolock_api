@@ -865,7 +865,7 @@ var weatherdataModifyRequiredData = function(weatherData, addr, forecastoptions,
 var checkTrespassing = function(LTID) {
     mysql.query("SELECT temp_out_flag FROM lolock_devices WHERE device_id = ?", [LTID])
         .spread(function(rows) {
-            if (rows[0].temp_out_flag == NULL) {
+            if (rows[0].temp_out_flag == null) {
                 sendPushToRoommate(LTID, "1", "누군가가 집에 침입했습니다.");
             }
             mysql.query("UPDATE lolock_devices SET temp_out_flag = NULL WHERE device_id = ? ", [LTID]);
