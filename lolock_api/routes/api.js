@@ -614,7 +614,21 @@ router.delete('/disposable-link/:linkId', function(req, res, next) {
                 device_id = rows[0].device_id;
                 mysql.query("DELETE FROM lolock_open_url WHERE url = ?", [linkId])
                     .then(function() {
-                        sendControllMessage("26", device_id, res);
+                      var timeArr = moment().format().split('T');
+                      var dateArr = timeArr[0].split('-');
+                      var timeArr = timeArr[1].split(':');
+                      var time = dateArr[0] + dateArr[1] + dateArr[2] + timeArr[0] + timeArr[1]; // 201707232325
+                      sendControllMessage("26", device_id, res);
+                      // TODO : open_url을 통해 누가 문을 열었다고 동거인에게 알려줌
+                      sendPushToRoommate(device_id, "1", "임시키를 통해 누군가 들어왔습니다.");
+                      mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", device_id)
+                        .spread(function(rows){
+                          return mysql.query("INSERT INTO lolock_logs (device_id, time, out_flag) VALUES (?,?,?)", [rows[0].id, time, 1]);
+                        })
+                        .catch(function(err)){
+                          console.log(err);
+                          console.log("임시키 로그 등록 실패");
+                        }
                     })
                     .catch(function(err) {
                         console.log(err);
@@ -849,7 +863,7 @@ var checkTrespassing = function(LTID) {
     mysql.query("SELECT temp_out_flag FROM lolock_devices WHERE device_id = ?", [LTID])
         .spread(function(rows) {
             if (rows[0].temp_out_flag == NULL) {
-                sendPushToRoommate(LTID, "2", "침입자가 감지되었습니다.");
+                sendPushToRoommate(LTID, "1", "누군가가 집에 침입했습니다.");
             }
             mysql.query("UPDATE lolock_devices SET temp_out_flag = NULL WHERE device_id = ? ", [LTID]);
         });
