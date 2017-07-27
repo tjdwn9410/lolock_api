@@ -247,21 +247,28 @@ router.post('/checkout/:phone_id', function(req, res, next){
       for (var j in roommateRows) {
         var pushData = {}
         if(roommateRows[j].phone_id == req.params.phone_id){
-          pushData.pushCode = "0";
-          sendPushMessage(roommateRows[j].phone_id, pushData)
-            .then(function(text) {
-              console.log(text)
-            }, function(err) {
-              console.log(err)
-            });
-          var timeArr = moment().format().split('T');
-          var dateArr = timeArr[0].split('-');
-          var timeArr = timeArr[1].split(':');
-          var time = dateArr[0]+dateArr[1]+dateArr[2]+timeArr[0]+timeArr[1];   // 201707232325
-          console.log(roommateRows[j].device_id + " " + roommateRows[j].user_id + " " + time + " " + 1);
-          mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)",[roommateRows[j].device_id, roommateRows[j].user_id, time, 1])
-            .catch(function(err){
-              console.log("출입로그 기록 실패 in /checkout");
+          mysql.query("SELECT * FROM lolock_devices WHERE id=?", roommateRows[j].device_id)
+            .spread(function(deviceRows){
+              // TODO : 기상정보 가져와야함
+              var timeArr = moment().format().split('T');
+              var dateArr = timeArr[0].split('-');
+              var timeArr = timeArr[1].split(':');
+              var time = dateArr[0]+dateArr[1]+dateArr[2]+timeArr[0]+timeArr[1];   // 201707232325
+              receiveWeatherInfo(deviceRows[0].gps_lon, deviceRows[0].gps_lat, deviceRows[0].addr, moment().format(), "NULL", function(data){
+                pushData.pushCode = "0";
+                pushData.message = "날씨:"+data.sky+" 온도:"+data.temperature+" / 오늘 일정 : 개입니다.";
+                sendPushMessage(roommateRows[j].phone_id, pushData)
+                  .then(function(text) {
+                    console.log(text)
+                  }, function(err) {
+                    console.log(err)
+                  });
+                console.log(roommateRows[j].device_id + " " + roommateRows[j].user_id + " " + time + " " + 1);
+                mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)",[roommateRows[j].device_id, roommateRows[j].user_id, time, 1])
+                  .catch(function(err){
+                    console.log("출입로그 기록 실패 in /checkout");
+                  })
+              })
             })
         }
         else{
@@ -631,7 +638,7 @@ router.get('/disposable-link/:linkId', function(req, res, next) {
 
 /* 기상청 api를 사용해 현재 지역의 기상정보를 가져옴 */
 // 경도       위도    날짜+시간
-var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, responseToReq) {
+var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, responseToReq, callback) {
     var dateArr = lastModifiedTime.split('T')[0].split('-');
     var timeArr = lastModifiedTime.split('T')[1].split(':');
     var date = dateArr[0] + dateArr[1] + dateArr[2];
@@ -690,8 +697,13 @@ var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, res
         request(options, function(error, response, body) {
             if (response.statusCode == 200) {
                 weatherdataModifyRequiredData(body, addr, forecastoptions, function(data) {
+                  if(responseToReq != "NULL"){
                     responseToReq.send(JSON.stringify(data));
                     console.log("날씨 response 성공");
+                  }
+                  else{
+                    callback(data);
+                  }
                 });
             } else {
                 responseToReq.send("기상청 API 에러!")
