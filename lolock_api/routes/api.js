@@ -427,7 +427,7 @@ router.post('/register', function(req, res, next) {
     var getUserIdFromDB;
     console.log(deviceId);
     console.log(userName);
-    mysql.query("UPDATE lolock_devices SET gps_lat=?,gps_lon=?,addr=? WHERE deviceId = ? AND gps_lat IS NULL", [deviceGPS_lat, deviceGPS_lon, deviceAddr,deviceId]);
+    mysql.query("UPDATE lolock_devices SET gps_lat=?,gps_lon=?,addr=? WHERE device_id = ? AND gps_lat IS NULL", [deviceGPS_lat, deviceGPS_lon, deviceAddr,deviceId]);
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
         .spread(function(rows) {
             getDeviceIdFromDB = rows[0].id;
