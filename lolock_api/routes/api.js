@@ -389,12 +389,12 @@ router.post('/loradata', function(req, res, next) {
     {
         console.log("누군가 나갈때 시작");
         sendPushToRoommate(LTID, "3", "누군가 나감");
-        setTimeout(checkTrespassing(LTID), 10000);
+        setTimeout(checkTrespassing, 10000,LTID);
     } else if (content[0] == "3" && content[1] == "1") // 누군가 들어올 떄
     {
         console.log("누군가 들어올 때 시작");
         sendPushToRoommate(LTID, "4", "누군가 들어옴");
-        setTimeout(checkTrespassing(LTID), 10000);
+        setTimeout(checkTrespassing, 10000,LTID);
     } else if (content[0] == "3" && content[1] == "2") // 진동센서에 의해 불법침입이 감지될 때
     {
         console.log("불법침입감지 시작");
@@ -860,14 +860,14 @@ var weatherdataModifyRequiredData = function(weatherData, addr, forecastoptions,
 };
 
 //불법침임 감지
-var checkTrespassing = function(LTID) {
-    mysql.query("SELECT temp_out_flag FROM lolock_devices WHERE device_id = ?", [LTID])
+var checkTrespassing = function(arg) {
+    mysql.query("SELECT temp_out_flag FROM lolock_devices WHERE device_id = ?", [arg])
         .spread(function(rows) {
           console.log(rows);
             if (rows[0].temp_out_flag == null) {
-                sendPushToRoommate(LTID, "1", "누군가가 집에 침입했습니다.");
+                sendPushToRoommate(arg, "1", "누군가가 집에 침입했습니다.");
             }
-            mysql.query("UPDATE lolock_devices SET temp_out_flag = NULL WHERE device_id = ? ", [LTID]);
+            mysql.query("UPDATE lolock_devices SET temp_out_flag = NULL WHERE device_id = ? ", [arg]);
         }).catch(function(err) {
             console.log("출입로그 기록 실패 in /checkout");
         })
