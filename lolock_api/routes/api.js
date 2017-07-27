@@ -771,7 +771,7 @@ var sendPushMessage = function(androidToken, dataObj) {
         var toAppBody = {}; // push 메세지 body
         toAppBody.data = dataObj;
         toAppBody.to = androidToken;
-        options.body = JSON.stringify(toAppBody);
+        options.body = toAppBody;
         // TODO : 동기화 할 것 promise 사용
         request(options, function(error, response, body) {
             console.log(response.body);
