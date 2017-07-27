@@ -237,7 +237,7 @@ router.put('/remotetest', function(req, res, next) {
 });
 
 /* POST 핸드폰에서 자신이 나갔다고 서버에 로그 등록을 요청 */
-router.post('/checkout/:phone_id', function(req, res, next) {
+router.get('/checkout/:phone_id', function(req, res, next) {
     console.log(req.params.phone_id + "가 나갔음")
     mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", req.params.phone_id)
         .spread(function(idrows) {
@@ -300,7 +300,7 @@ router.post('/checkout/:phone_id', function(req, res, next) {
 
 
 /* POST 핸드폰에서 자신이 들어왔다고 서버에 로그 등록을 요청 */
-router.post('/checkin/:phone_id', function(req, res, next) {
+router.get('/checkin/:phone_id', function(req, res, next) {
     console.log(req.params.phone_id + "가 들어왔음")
     mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", req.params.phone_id)
         .spread(function(idrows) {
@@ -400,6 +400,7 @@ router.post('/loradata', function(req, res, next) {
         console.log("불법침입감지 시작");
         sendPushToRoommate(LTID, "2", "침입자가 감지되었습니다.");
     }
+    res.send();
 });
 
 router.get('/checkId/:deviceId', function(req, res, next) {
