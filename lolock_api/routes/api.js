@@ -388,12 +388,12 @@ router.post('/loradata', function(req, res, next) {
     if (content[0] == "3" && content[1] == "0") // 누군가 나갈때
     {
         console.log("누군가 나갈때 시작");
-        sendPushToRoommate(LTID, "3", "누군가 나감");
+        sendPushToRoommate(LTID, "3", "");
         setTimeout(checkTrespassing, 10000, LTID);
     } else if (content[0] == "3" && content[1] == "1") // 누군가 들어올 떄
     {
         console.log("누군가 들어올 때 시작");
-        sendPushToRoommate(LTID, "4", "누군가 들어옴");
+        sendPushToRoommate(LTID, "4", "");
         setTimeout(checkTrespassing, 10000, LTID);
     } else if (content[0] == "3" && content[1] == "2") // 진동센서에 의해 불법침입이 감지될 때
     {
