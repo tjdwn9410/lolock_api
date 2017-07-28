@@ -398,7 +398,7 @@ router.post('/loradata', function(req, res, next) {
     } else if (content[0] == "3" && content[1] == "2") // 진동센서에 의해 불법침입이 감지될 때
     {
         console.log("불법침입감지 시작");
-        sendPushToRoommate(LTID, "2", "침입자가 감지되었습니다.");
+        sendPushToRoommate(LTID, "2", "진동이 감지되었습니다.");
     }
     res.send();
 });
@@ -868,7 +868,7 @@ var checkTrespassing = function(LTID) {
     mysql.query("SELECT temp_out_flag FROM lolock_devices WHERE device_id = ?", [LTID])
         .spread(function(rows) {
             if (rows[0].temp_out_flag == null) {
-                sendPushToRoommate(LTID, "1", "누군가가 집에 침입했습니다.");
+                sendPushToRoommate(LTID, "2", "누군가가 집에 침입했습니다.");
             }
             mysql.query("UPDATE lolock_devices SET temp_out_flag = NULL WHERE device_id = ? ", [LTID]);
         });
