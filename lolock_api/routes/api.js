@@ -769,8 +769,10 @@ var sendPushMessage = function(androidToken, dataObj) {
             headers: headers
         }
         var toAppBody = {}; // push 메세지 body
+        toAppBody.notification = {};
         console.log("dataObj : " + dataObj);
-        toAppBody.data = dataObj;
+        toAppBody.notification.body = dataObj;
+        toAppBody.notification.title = "LoLock 메세지";
         toAppBody.to = androidToken;
         options.body = JSON.stringify(toAppBody);
         console.log("options.body : " + JSON.stringify(toAppBody));
