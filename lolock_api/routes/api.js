@@ -868,7 +868,7 @@ var checkTrespassing = function(LTID) {
     mysql.query("SELECT temp_out_flag FROM lolock_devices WHERE device_id = ?", [LTID])
         .spread(function(rows) {
             if (rows[0].temp_out_flag == null) {
-                sendPushToRoommate(LTID, "2", "누군가가 집에 침입했습니다.");
+                sendPushToRoommate(LTID, "2", "등록되지 않은 사용자가 침입했습니다.");
             }
             mysql.query("UPDATE lolock_devices SET temp_out_flag = NULL WHERE device_id = ? ", [LTID]);
         });
