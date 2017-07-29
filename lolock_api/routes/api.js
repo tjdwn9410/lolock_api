@@ -263,6 +263,11 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                                     }, function(err) {
                                         console.log(err)
                                     });
+                                mysql.query("UPDATE lolock_devices SET temp_out_flag='1' WHERE id=?"roommateRows[j].device_id);
+                                    .catch(function(err){
+                                      console.log(err);
+                                      cosole.log("temp_out_flag Update 오류!!!");
+                                    })
                                 console.log(roommateRows[j].device_id + " " + roommateRows[j].user_id + " " + time + " " + 1);
                                 mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)", [roommateRows[j].device_id, roommateRows[j].user_id, time, 1])
                                     .catch(function(err) {
@@ -314,6 +319,11 @@ router.get('/checkin/:phone_id', function(req, res, next) {
                     var timeArr = timeArr[1].split(':');
                     var time = dateArr[0] + dateArr[1] + dateArr[2] + timeArr[0] + timeArr[1]; // 201707232325
                     console.log(roommateRows[j].device_id + " " + roommateRows[j].user_id + " " + time + " " + 1);
+                    mysql.query("UPDATE lolock_devices SET temp_out_flag='1' WHERE id=?"roommateRows[j].device_id);
+                        .catch(function(err){
+                          console.log(err);
+                          cosole.log("temp_out_flag Update 오류!!!");
+                        })
                     mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)", [roommateRows[j].device_id, roommateRows[j].user_id, time, 0])
                         .catch(function(err) {
                             console.log("출입로그 기록 실패 in /checkout");
