@@ -400,7 +400,7 @@ router.post('/loradata', function(req, res, next) {
     } else if (content[0] == "3" && content[1] == "2") // 진동센서에 의해 불법침입이 감지될 때
     {
         console.log("불법침입감지 시작");
-        sendPushToRoommate(LTID, "2", "진동이 감지되었습니다.");
+        sendPushToRoommate(LTID, "2", "비정상적인 충격이 감지되었습니다.");
     }
     res.send();
 });
