@@ -265,6 +265,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                                     }, function(err) {
                                         console.log(err)
                                     });
+                                mysql.query("UPDATE lolock_devices SET temp_out_flag='1' WHERE id=?", roommateRows[j].device_id);
                                 console.log(roommateRows[j].device_id + " " + roommateRows[j].user_id + " " + time + " " + 1);
                                 mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)", [roommateRows[j].device_id, roommateRows[j].user_id, time, 1])
                                     .catch(function(err) {
@@ -317,6 +318,7 @@ router.get('/checkin/:phone_id', function(req, res, next) {
                     var timeArr = timeArr[1].split(':');
                     var time = dateArr[0] + dateArr[1] + dateArr[2] + timeArr[0] + timeArr[1]; // 201707232325
                     console.log(roommateRows[j].device_id + " " + roommateRows[j].user_id + " " + time + " " + 1);
+                    mysql.query("UPDATE lolock_devices SET temp_out_flag='1' WHERE id=?", roommateRows[j].device_id);
                     mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)", [roommateRows[j].device_id, roommateRows[j].user_id, time, 0])
                         .catch(function(err) {
                             console.log("출입로그 기록 실패 in /checkout");
@@ -391,17 +393,17 @@ router.post('/loradata', function(req, res, next) {
     if (content[0] == "3" && content[1] == "0") // 누군가 나갈때
     {
         console.log("누군가 나갈때 시작");
-        sendPushToRoommate(LTID, "3", "누군가 나감");
-        setTimeout(checkTrespassing, 10000,LTID);
+        sendPushToRoommate(LTID, "3", "");
+        setTimeout(checkTrespassing, 10000, LTID);
     } else if (content[0] == "3" && content[1] == "1") // 누군가 들어올 떄
     {
         console.log("누군가 들어올 때 시작");
-        sendPushToRoommate(LTID, "4", "누군가 들어옴");
-        setTimeout(checkTrespassing, 10000,LTID);
+        sendPushToRoommate(LTID, "4", "");
+        setTimeout(checkTrespassing, 10000, LTID);
     } else if (content[0] == "3" && content[1] == "2") // 진동센서에 의해 불법침입이 감지될 때
     {
         console.log("불법침입감지 시작");
-        sendPushToRoommate(LTID, "2", "침입자가 감지되었습니다.");
+        sendPushToRoommate(LTID, "2", "비정상적인 충격이 감지되었습니다.");
     }
     res.send();
 });
@@ -772,6 +774,9 @@ var sendPushMessage = function(androidToken, dataObj) {
             headers: headers
         }
         var toAppBody = {}; // push 메세지 body
+
+        console.log("dataObj : " + dataObj);
+
         toAppBody.data = dataObj;
         toAppBody.to = androidToken;
         options.body = JSON.stringify(toAppBody);
@@ -868,7 +873,7 @@ var checkTrespassing = function(arg) {
         .spread(function(rows) {
           console.log(rows);
             if (rows[0].temp_out_flag == null) {
-                sendPushToRoommate(arg, "1", "누군가가 집에 침입했습니다.");
+                sendPushToRoommate(arg, "2", "등록되지 않은 사용자가 침입했습니다.");
             }
             mysql.query("UPDATE lolock_devices SET temp_out_flag = NULL WHERE device_id = ? ", [arg]);
         }).catch(function(err) {
