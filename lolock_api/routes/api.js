@@ -683,7 +683,7 @@ var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, res
         console.log("nx : " + nx + " ny : " + ny);
 
         var GETuri = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastGrib?';
-        GETuri += 'ServiceKey=Wl56iXQ3MjJdi%2FO2u34%2BThhi%2F6QDsxA68HvdZ8pZOSo9DlFlvunKzxO1IGUwB6jsSIuDIp8DGEHzvAnoNdgFCQ%3D%3D';
+        GETuri += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
         GETuri += '&base_date=' + date;
         GETuri += '&base_time=' + time;
         GETuri += '&nx=' + nx;
@@ -698,7 +698,7 @@ var receiveWeatherInfo = function(gps_long, gps_lat, addr, lastModifiedTime, res
         if (Number(time) <= 100 && timeArr[1] < 10)
             date = moment(date).add(-1, 'days').format('YYYYMMDD'); // 하루 빼고 2300
         var GETforecasturi = 'http://newsky2.kma.go.kr/service/SecndSrtpdFrcstInfoService2/ForecastSpaceData?';
-        GETforecasturi += 'ServiceKey=Wl56iXQ3MjJdi%2FO2u34%2BThhi%2F6QDsxA68HvdZ8pZOSo9DlFlvunKzxO1IGUwB6jsSIuDIp8DGEHzvAnoNdgFCQ%3D%3D';
+        GETforecasturi += 'ServiceKey=fnu5UNOGf0qmYIWbwbWTW8vtKs5JAJqQdo9afbZwmQM6WPx6B97QxohwO7TI3S9Msx0BFFlfJxfE%2BSJ5OEtf3w%3D%3D';
         GETforecasturi += '&base_date=' + date;
         GETforecasturi += '&base_time=0200';
         GETforecasturi += '&nx=' + nx;
