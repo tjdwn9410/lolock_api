@@ -256,7 +256,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                             var time = dateArr[0] + dateArr[1] + dateArr[2] + timeArr[0] + timeArr[1]; // 201707232325
                             receiveWeatherInfo(deviceRows[0].gps_lon, deviceRows[0].gps_lat, deviceRows[0].addr, moment().format(), "NULL", function(data) {
                                 pushData.pushCode = "0";
-                                pushData.message = "날씨:" + data.sky + " 온도:" + data.temperature + " / 오늘 일정 : 개입니다.";
+                                pushData.message = "날씨:" + data.sky + " 온도:" + data.temperature + " / 오늘 일정 : 4개입니다.";
                                 sendPushMessage(roommateRows[j].phone_id, pushData)
                                     .then(function(text) {
                                         console.log(text)
