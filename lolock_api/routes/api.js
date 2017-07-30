@@ -239,6 +239,7 @@ router.put('/remotetest', function(req, res, next) {
 /* POST 핸드폰에서 자신이 나갔다고 서버에 로그 등록을 요청 */
 router.get('/checkout/:phone_id', function(req, res, next) {
     console.log(req.params.phone_id + "가 나갔음")
+    var name;
 
     mysql.query("UPDATE lolock_users SET flag = 0 WHERE phone_id = ? ", [req.params.phone_id]);
     mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", req.params.phone_id)
@@ -249,6 +250,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
             for (var j in roommateRows) {
                 var pushData = {}
                 if (roommateRows[j].phone_id == req.params.phone_id) {
+                    name =  roommateRows[j].name;
                     mysql.query("SELECT * FROM lolock_devices WHERE id=?", roommateRows[j].device_id)
                         .spread(function(deviceRows) {
                             // TODO : 기상정보 가져와야함
@@ -275,7 +277,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                         })
                 } else {
                     pushData.pushCode = "1";
-                    pushData.message = roommateRows[j].name + "님이 나갔습니다."
+                    pushData.message = name + "님이 나갔습니다."
                     sendPushMessage(roommateRows[j].phone_id, pushData)
                         .then(function(text) {
                             console.log(text)
@@ -305,6 +307,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
 /* POST 핸드폰에서 자신이 들어왔다고 서버에 로그 등록을 요청 */
 router.get('/checkin/:phone_id', function(req, res, next) {
     console.log(req.params.phone_id + "가 들어왔음")
+    var name;
     mysql.query("UPDATE lolock_users SET flag = 1 WHERE phone_id = ? ", [req.params.phone_id]);
     mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", req.params.phone_id)
         .spread(function(idrows) {
@@ -314,6 +317,7 @@ router.get('/checkin/:phone_id', function(req, res, next) {
             for (var j in roommateRows) {
                 var pushData = {};
                 if (roommateRows[j].phone_id == req.params.phone_id) {
+                    name = roommateRows[j].name;
                     var timeArr = moment().format().split('T');
                     var dateArr = timeArr[0].split('-');
                     var timeArr = timeArr[1].split(':');
