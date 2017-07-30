@@ -239,6 +239,8 @@ router.put('/remotetest', function(req, res, next) {
 /* POST 핸드폰에서 자신이 나갔다고 서버에 로그 등록을 요청 */
 router.get('/checkout/:phone_id', function(req, res, next) {
     console.log(req.params.phone_id + "가 나갔음")
+
+    mysql.query("UPDATE lolock_users SET flag = 0 WHERE phone_id = ? ", [req.params.phone_id]);
     mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", req.params.phone_id)
         .spread(function(idrows) {
             return mysql.query("SELECT * FROM lolock_register AS R LEFT JOIN lolock_users AS U ON R.user_id = U.id  WHERE R.device_id = (SELECT device_id FROM lolock_register WHERE user_id = ?)", idrows[0].id)
@@ -303,6 +305,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
 /* POST 핸드폰에서 자신이 들어왔다고 서버에 로그 등록을 요청 */
 router.get('/checkin/:phone_id', function(req, res, next) {
     console.log(req.params.phone_id + "가 들어왔음")
+    mysql.query("UPDATE lolock_users SET flag = 1 WHERE phone_id = ? ", [req.params.phone_id]);
     mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", req.params.phone_id)
         .spread(function(idrows) {
             return mysql.query("SELECT * FROM lolock_register AS R LEFT JOIN lolock_users AS U ON R.user_id = U.id  WHERE R.device_id = (SELECT device_id FROM lolock_register WHERE user_id = ?)", idrows[0].id)
@@ -771,11 +774,12 @@ var sendPushMessage = function(androidToken, dataObj) {
             headers: headers
         }
         var toAppBody = {}; // push 메세지 body
+
         console.log("dataObj : " + dataObj);
+
         toAppBody.data = dataObj;
         toAppBody.to = androidToken;
         options.body = JSON.stringify(toAppBody);
-        console.log("options.body : " + JSON.stringify(toAppBody));
         // TODO : 동기화 할 것 promise 사용
         request(options, function(error, response, body) {
             console.log(response.body);
@@ -864,13 +868,16 @@ var weatherdataModifyRequiredData = function(weatherData, addr, forecastoptions,
 };
 
 //불법침임 감지
-var checkTrespassing = function(LTID) {
-    mysql.query("SELECT temp_out_flag FROM lolock_devices WHERE device_id = ?", [LTID])
+var checkTrespassing = function(arg) {
+    mysql.query("SELECT temp_out_flag FROM lolock_devices WHERE device_id = ?", [arg])
         .spread(function(rows) {
+          console.log(rows);
             if (rows[0].temp_out_flag == null) {
-                sendPushToRoommate(LTID, "2", "등록되지 않은 사용자가 침입했습니다.");
+                sendPushToRoommate(arg, "2", "등록되지 않은 사용자가 침입했습니다.");
             }
-            mysql.query("UPDATE lolock_devices SET temp_out_flag = NULL WHERE device_id = ? ", [LTID]);
-        });
+            mysql.query("UPDATE lolock_devices SET temp_out_flag = NULL WHERE device_id = ? ", [arg]);
+        }).catch(function(err) {
+            console.log("출입로그 기록 실패 in /checkout");
+        })
 };
 module.exports = router;
