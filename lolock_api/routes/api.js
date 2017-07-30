@@ -248,9 +248,13 @@ router.get('/checkout/:phone_id', function(req, res, next) {
         })
         .spread(function(roommateRows) {
             for (var j in roommateRows) {
+              if (roommateRows[j].phone_id == req.params.phone_id){
+                name = roommateRows[j].name;
+              }
+            }
+            for (var j in roommateRows) {
                 var pushData = {}
                 if (roommateRows[j].phone_id == req.params.phone_id) {
-                    name =  roommateRows[j].name;
                     mysql.query("SELECT * FROM lolock_devices WHERE id=?", roommateRows[j].device_id)
                         .spread(function(deviceRows) {
                             // TODO : 기상정보 가져와야함
@@ -314,10 +318,15 @@ router.get('/checkin/:phone_id', function(req, res, next) {
             return mysql.query("SELECT * FROM lolock_register AS R LEFT JOIN lolock_users AS U ON R.user_id = U.id  WHERE R.device_id = (SELECT device_id FROM lolock_register WHERE user_id = ?)", idrows[0].id)
         })
         .spread(function(roommateRows) {
+          for (var j in roommateRows) {
+            if (roommateRows[j].phone_id == req.params.phone_id){
+              name = roommateRows[j].name;
+            }
+          }
+
             for (var j in roommateRows) {
                 var pushData = {};
                 if (roommateRows[j].phone_id == req.params.phone_id) {
-                    name = roommateRows[j].name;
                     var timeArr = moment().format().split('T');
                     var dateArr = timeArr[0].split('-');
                     var timeArr = timeArr[1].split(':');
