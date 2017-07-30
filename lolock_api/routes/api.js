@@ -312,6 +312,7 @@ router.get('/checkin/:phone_id', function(req, res, next) {
         })
         .spread(function(roommateRows) {
             for (var j in roommateRows) {
+                var pushData = {};
                 if (roommateRows[j].phone_id == req.params.phone_id) {
                     var timeArr = moment().format().split('T');
                     var dateArr = timeArr[0].split('-');
