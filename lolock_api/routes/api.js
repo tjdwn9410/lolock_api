@@ -239,7 +239,7 @@ router.put('/remotetest', function(req, res, next) {
 /* POST 핸드폰에서 자신이 나갔다고 서버에 로그 등록을 요청 */
 router.get('/checkout/:phone_id', function(req, res, next) {
     console.log(req.params.phone_id + "가 나갔음")
-    var name;
+    var name = "";
 
     mysql.query("UPDATE lolock_users SET flag = 0 WHERE phone_id = ? ", [req.params.phone_id]);
     mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", req.params.phone_id)
@@ -311,7 +311,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
 /* POST 핸드폰에서 자신이 들어왔다고 서버에 로그 등록을 요청 */
 router.get('/checkin/:phone_id', function(req, res, next) {
     console.log(req.params.phone_id + "가 들어왔음")
-    var name;
+    var name = "";
     mysql.query("UPDATE lolock_users SET flag = 1 WHERE phone_id = ? ", [req.params.phone_id]);
     mysql.query("SELECT id FROM lolock_users WHERE phone_id=?", req.params.phone_id)
         .spread(function(idrows) {
