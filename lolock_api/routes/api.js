@@ -330,7 +330,7 @@ router.get('/checkin/:phone_id', function(req, res, next) {
                         })
                 } else {
                     pushData.pushCode = "1";
-                    pushData.message = roommateRows[j].name + "님이 들어왔습니다."
+                    pushData.message = name + "님이 들어왔습니다."
                     sendPushMessage(roommateRows[j].phone_id, pushData)
                         .then(function(text) {
                             console.log(text)
