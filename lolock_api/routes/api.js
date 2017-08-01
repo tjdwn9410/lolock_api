@@ -248,7 +248,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
             return mysql.query("SELECT * FROM lolock_register AS R LEFT JOIN lolock_users AS U ON R.user_id = U.id  WHERE R.device_id = (SELECT device_id FROM lolock_register WHERE user_id = ?)", idrows[0].id)
         })
         .spread(function(roommateRows) {
-            for (var j in roommateRows) {
+            for (var j = 0; j < roommateRows.length;) {
                 var pushData = {}
                 if (roommateRows[j].phone_id == req.params.phone_id) {
                     mysql.query("SELECT * FROM lolock_devices WHERE id=?", roommateRows[j].device_id)
@@ -261,18 +261,20 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                             weatherService.receiveWeatherInfo(deviceRows[0].gps_lon, deviceRows[0].gps_lat, deviceRows[0].addr, moment().format(), "NULL", function(data) {
                                 pushData.pushCode = "0";
                                 pushData.message = "날씨:" + data.sky + " 온도:" + data.temperature + " / 오늘 일정 : 4개입니다.";
-                                reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
-                                    .then(function(text) {
-                                        console.log(text)
-                                    }, function(err) {
-                                        console.log(err)
-                                    });
                                 mysql.query("UPDATE lolock_devices SET temp_out_flag='1' WHERE id=?", roommateRows[j].device_id);
-                                console.log(roommateRows[j].device_id + " " + roommateRows[j].user_id + " " + time + " " + 1);
                                 mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)", [roommateRows[j].device_id, roommateRows[j].user_id, time, 1])
+                                    .then(function(fin){
+                                      console.log("출입로그 기록 완료 in /checkout");
+                                    })
                                     .catch(function(err) {
                                         console.log("출입로그 기록 실패 in /checkout");
                                     })
+                                reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
+                                    .then(function(text) {
+                                        console.log(text); j++;
+                                    }, function(err) {
+                                        console.log(err); j++;
+                                    });
                             })
                         })
                 } else {
@@ -280,9 +282,9 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                     pushData.message = name + "님이 나갔습니다."
                     reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
                         .then(function(text) {
-                            console.log(text)
+                            console.log(text); j++;
                         }, function(err) {
-                            console.log(err)
+                            console.log(err); j++;
                         });
                 }
             }
@@ -315,7 +317,7 @@ router.get('/checkin/:phone_id', function(req, res, next) {
             return mysql.query("SELECT * FROM lolock_register AS R LEFT JOIN lolock_users AS U ON R.user_id = U.id  WHERE R.device_id = (SELECT device_id FROM lolock_register WHERE user_id = ?)", idrows[0].id)
         })
         .spread(function(roommateRows) {
-            for (var j in roommateRows) {
+            for (var j = 0; j < roommateRows.length;) {
                 var pushData = {};
                 if (roommateRows[j].phone_id == req.params.phone_id) {
                     var timeArr = moment().format().split('T');
@@ -325,17 +327,20 @@ router.get('/checkin/:phone_id', function(req, res, next) {
                     console.log(roommateRows[j].device_id + " " + roommateRows[j].user_id + " " + time + " " + 1);
                     mysql.query("UPDATE lolock_devices SET temp_out_flag='1' WHERE id=?", roommateRows[j].device_id);
                     mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)", [roommateRows[j].device_id, roommateRows[j].user_id, time, 0])
+                        .then(function(fin){
+                          console.log("출입로그 기록 완료 in /checkout"); j++;
+                        })
                         .catch(function(err) {
-                            console.log("출입로그 기록 실패 in /checkout");
+                            console.log("출입로그 기록 실패 in /checkout"); j++;
                         })
                 } else {
                     pushData.pushCode = "1";
                     pushData.message = name + "님이 들어왔습니다."
                     reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
                         .then(function(text) {
-                            console.log(text)
+                            console.log(text); j++;
                         }, function(err) {
-                            console.log(err)
+                            console.log(err); j++;
                         });
                 }
             }
