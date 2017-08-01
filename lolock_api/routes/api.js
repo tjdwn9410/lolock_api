@@ -251,9 +251,9 @@ router.get('/checkout/:phone_id', function(req, res, next) {
             for (var j in roommateRows) {
                 var pushData = {}
                 if (roommateRows[j].phone_id == req.params.phone_id) {
+                    var reqPhone_id = roommateRows[j].phone_id;
                     mysql.query("SELECT * FROM lolock_devices WHERE id=?", roommateRows[j].device_id)
                         .spread(function(deviceRows) {
-                            // TODO : 기상정보 가져와야함
                             var timeArr = moment().format().split('T');
                             var dateArr = timeArr[0].split('-');
                             var timeArr = timeArr[1].split(':');
@@ -269,7 +269,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                                     .catch(function(err) {
                                         console.log("출입로그 기록 실패 in /checkout");
                                     })
-                                reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
+                                reqFcm.sendPushMessage(reqPhone_id, pushData)
                                     .then(function(text) {
                                         console.log(text);
                                     }, function(err) {
