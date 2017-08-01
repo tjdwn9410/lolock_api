@@ -22,9 +22,9 @@ router.use(function(res, req, next) {
    2. lolock_devices 등록과 동시에 subscribe를 해둔다. subscribe 이름 : AlldataNoti;
    3. 사용자가 로락 디바이스를 구매한 뒤 앱으로 등록을 하게 되면 앱에서 POST 방식으로 /register로 데이터전송
       그리고 DB table인 lolock_users와 lolock_register에 등록한다.
-   4. TODO : 문이 열리거나 특정 상황에 lolock이 Thingplug에 데이터를 전송하면 POST방식으로 /loradata로 데이터가 전송됨
-   5. TODO : 기기가 꺼졌다가 다시 켜졌을 시에 lolock에 필요한 동거인 데이터를 전송
-   6. TODO : 동거인이 추가될 때 마다 lolock에 블루투스 address?를 전송해야함(첫 기기등록시에도)
+   4. 문이 열리거나 특정 상황에 lolock이 Thingplug에 데이터를 전송하면 POST방식으로 /loradata로 데이터가 전송됨
+   5. 기기가 꺼졌다가 다시 켜졌을 시에 lolock에 필요한 동거인 데이터를 전송
+   6. 동거인이 추가될 때 마다 lolock에 블루투스 address?를 전송해야함(첫 기기등록시에도)
 */
 
 
@@ -96,6 +96,7 @@ router.get('/userids/:user_id/passwords/:passwd', function(req, res, next) {
     });
 })
 
+/* GET 로그인 시에 유저의 정보를 받아옴 */
 router.get('/userInfo/:phoneId', function(req, res, next) {
     var userPhoneId = req.params.phoneId;
     var userName;
@@ -174,11 +175,9 @@ router.get('/homemateslist/:LTID', function(req, res, next) {
                     });
             }
         })
-    // // TODO : 요청한 앱에 동거인 리스트를 body로 실어서 보냄
-
 })
 
-//LoLock Remote Open
+/* PUT 로락 원격으로 문을 여는 요청을 ThingPlug를 통해 요청 */
 router.put('/remote-open', function(req, res, next) {
     var jsonRes = req.body;
     var openDeviceId = jsonRes.openDeviceId;
@@ -198,43 +197,6 @@ router.put('/remote-open', function(req, res, next) {
             sendControllMessage("26", rows[0].device_id, res);
         })
 })
-
-/* PUT Lolock to open / 로락을 원격으로 열 수 있도록 데이터 전송 */
-
-router.put('/remotetest', function(req, res, next) {
-    console.log(1);
-    // X-M2M-RI , X-M2M-Origin, uKey, Content-Type는 사용자마다 달라야한다. / 지금은 테스트 중이라 직접 입력함
-    var headers = {
-        'Accept': 'application/xml',
-        'X-M2M-RI': '00000174d02544fffef0100d_0012', // LoLock_1 / LoLock_2 : 00000174d02544fffef0100d
-        'X-M2M-Origin': '00000174d02544fffef0100d',
-        'uKey': 'STRqQWE5a28zTlJ0QWQ0d0JyZVlBL1lWTkxCOFlTYm4raE5uSXJKTC95eG9NeUxoS3d4ejY2RWVIYStlQkhNSA==',
-        'Content-Type': 'application/xml'
-    }
-    /*
-      body(xml형식) 양식
-      var body = '<?xml version="1.0" encoding="utf-8"?>' +
-               '<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">'+
-                '<soap12:Body>......</soap12:Body></soap12:Envelope>';
-      */
-    var options = { // 0240771000000174 : AppEUI 와 LTID 는 사용자마다 달라야한다. HOW? / 지금은 테스트라서 직접 입력헀다
-        url: 'https://thingplugpf.sktiot.com:9443/0240771000000174/v1_0/mgmtCmd-00000174d02544fffef0100d_extDevMgmt',
-        method: 'PUT',
-        headers: headers,
-        body: "<?xml version=\"1.0\" encoding=\"UTF-8\"?><m2m:mgc xmlns:m2m=\"http://www.onem2m.org/xml/protocols\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><exe>true</exe><exra>010203</exra></m2m:mgc>"
-    }
-
-    request(options, function(error, response, body) {
-        if (!error && response.statusCode == 200) {
-            parser.parseString(body, function(err, result) {
-                console.log(JSON.stringify(result));
-                //console.log(result.ThingPlug.result_code);
-                //console.log(result.ThingPlug.user[0].uKey);
-            });
-            res.send(body);
-        }
-    });
-});
 
 /* POST 핸드폰에서 자신이 나갔다고 서버에 로그 등록을 요청 */
 router.get('/checkout/:phone_id', function(req, res, next) {
@@ -393,6 +355,7 @@ router.post('/loradata', function(req, res, next) {
     res.send();
 });
 
+/* GET 서버에 등록된 기기인지 아닌지 확인 */
 router.get('/checkId/:deviceId', function(req, res, next) {
     var deviceId = "00000174d02544fffe" + req.params.deviceId;
     mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", [deviceId])
@@ -410,6 +373,8 @@ router.get('/checkId/:deviceId', function(req, res, next) {
             }
         });
 });
+
+/* POST 회원가입 및 기기등록 */
 router.post('/register', function(req, res, next) {
     var jsonRes = req.body;
     console.log(jsonRes);
@@ -462,7 +427,7 @@ router.post('/register', function(req, res, next) {
 });
 
 
-//출입 기록 관리
+/* GET 출입 기록 관리 */
 router.get('/outing-log/:phoneId', function(req, res, next) {
     var phoneId = req.params.phoneId;
     var randomStr;
@@ -523,7 +488,7 @@ router.get('/outing-log/:phoneId', function(req, res, next) {
         })
 });
 
-/* GET  */
+/* GET 기상청 API를 이용하여 현재 날씨 정보를 받고 JSON 데이터를 수정해 response */
 router.get('/weatherdata/:LTID', function(req, res, next) {
     var LTID = "00000174d02544fffe" + req.params.LTID;
     var gps_lat;
@@ -555,6 +520,7 @@ router.get('/weatherdata/:LTID', function(req, res, next) {
         })
 })
 
+/* GET 일회용 키 발급 */
 router.get('/open-url/:phoneId', function(req, res, next) {
     var phoneId = req.params.phoneId;
     var randomStr;
@@ -590,6 +556,7 @@ router.get('/open-url/:phoneId', function(req, res, next) {
         });
 });
 
+/* DELETE 발급 받은 일회용 키를 DB에서 삭제함과 동시에 원격 문열림 요청 */
 router.delete('/disposable-link/:linkId', function(req, res, next) {
     var linkId = req.params.linkId;
     var device_id;
@@ -633,6 +600,7 @@ router.delete('/disposable-link/:linkId', function(req, res, next) {
         })
 })
 
+/* GET 받은 일회용 키로 접속했을때 open_url.html을 response 한다. */
 router.get('/disposable-link/:linkId', function(req, res, next) {
     res.sendfile('open_url.html');
 });
