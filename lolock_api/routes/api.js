@@ -248,7 +248,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
             return mysql.query("SELECT * FROM lolock_register AS R LEFT JOIN lolock_users AS U ON R.user_id = U.id  WHERE R.device_id = (SELECT device_id FROM lolock_register WHERE user_id = ?)", idrows[0].id)
         })
         .spread(function(roommateRows) {
-            for (var j = 0; j < roommateRows.length;) {
+            for (var j in roommateRows) {
                 var pushData = {}
                 if (roommateRows[j].phone_id == req.params.phone_id) {
                     mysql.query("SELECT * FROM lolock_devices WHERE id=?", roommateRows[j].device_id)
@@ -271,23 +271,21 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                                     })
                                 reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
                                     .then(function(text) {
-                                        console.log(text); j++;
+                                        console.log(text);
                                     }, function(err) {
-                                        console.log(err); j++;
+                                        console.log(err);
                                     });
                             })
                         })
                 } else {
                     pushData.pushCode = "1";
-                    pushData.message = name + "님이 나갔습니다."
+                    pushData.message = name + "님이 나갔습니다.";
                     reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
                         .then(function(text) {
-                            console.log(text); j++;
+                            console.log(text);
                         }, function(err) {
-                            console.log(err); j++;
+                            console.log(err);
                         });
-
-                   console.log(j);
                 }
             }
             var sendObj = {
@@ -319,7 +317,7 @@ router.get('/checkin/:phone_id', function(req, res, next) {
             return mysql.query("SELECT * FROM lolock_register AS R LEFT JOIN lolock_users AS U ON R.user_id = U.id  WHERE R.device_id = (SELECT device_id FROM lolock_register WHERE user_id = ?)", idrows[0].id)
         })
         .spread(function(roommateRows) {
-            for (var j = 0; j < roommateRows.length;) {
+            for (var j in roommateRows) {
                 var pushData = {};
                 if (roommateRows[j].phone_id == req.params.phone_id) {
                     var timeArr = moment().format().split('T');
@@ -330,19 +328,19 @@ router.get('/checkin/:phone_id', function(req, res, next) {
                     mysql.query("UPDATE lolock_devices SET temp_out_flag='1' WHERE id=?", roommateRows[j].device_id);
                     mysql.query("INSERT INTO lolock_logs (device_id, user_id, time, out_flag) VALUES (?,?,?,?)", [roommateRows[j].device_id, roommateRows[j].user_id, time, 0])
                         .then(function(fin){
-                          console.log("출입로그 기록 완료 in /checkout"); j++;
+                          console.log("출입로그 기록 완료 in /checkin");
                         })
                         .catch(function(err) {
-                            console.log("출입로그 기록 실패 in /checkout"); j++;
+                            console.log("출입로그 기록 실패 in /checkin");
                         })
                 } else {
                     pushData.pushCode = "1";
                     pushData.message = name + "님이 들어왔습니다."
                     reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
                         .then(function(text) {
-                            console.log(text); j++;
+                            console.log(text)
                         }, function(err) {
-                            console.log(err); j++;
+                            console.log(err)
                         });
                 }
             }
