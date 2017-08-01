@@ -4,6 +4,7 @@
 */
 var mysql = require('mysql-promise')();
 var request = require('request');
+var reqFcm = require('./reqFcm');
 module.exports.sendPushMessage = function(androidToken, dataObj) {
     return new Promise(function(resolve, reject) {
         // TODO
@@ -48,7 +49,7 @@ module.exports.sendPushToRoommate = function(LTID, pushCode, pushMessage) {
                 var pushData = {}
                 pushData.pushCode = pushCode;
                 pushData.message = pushMessage;
-                sendPushMessage(roommateRows[j].phone_id, pushData)
+                reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
                     .then(function(text) {
                         console.log(text)
                     }, function(err) {
