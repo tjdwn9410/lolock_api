@@ -19,14 +19,13 @@ module.exports.sendPushMessage = function(androidToken, dataObj) {
         }
         var toAppBody = {}; // push 메세지 body
 
-        console.log("dataObj : " + dataObj);
+        console.log("dataObj : " + JSON.stringify(dataObj));
 
         toAppBody.data = dataObj;
         toAppBody.to = androidToken;
         options.body = JSON.stringify(toAppBody);
         // TODO : 동기화 할 것 promise 사용
         request(options, function(error, response, body) {
-            console.log(response.body);
             var bodyobj = eval("(" + response.body + ")");
             // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
             if (bodyobj.success === 1) {
