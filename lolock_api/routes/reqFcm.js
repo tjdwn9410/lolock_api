@@ -2,7 +2,8 @@
   FCM 서버에 안드로이드 푸시 메세지 보내기 요청 기능 모듈
   관련 정보 : https://firebase.google.com/docs/cloud-messaging/server?hl=ko
 */
-
+var mysql = require('mysql-promise')();
+var request = require('request');
 module.exports.sendPushMessage = function(androidToken, dataObj) {
     return new Promise(function(resolve, reject) {
         // TODO
