@@ -19,7 +19,7 @@ module.exports.sendPushMessage = function(androidToken, dataObj) {
         }
         var toAppBody = {}; // push 메세지 body
 
-        console.log("dataObj : " + JSON.stringify(dataObj));
+        console.log("PushMessage 내용 : " + JSON.stringify(dataObj));
 
         toAppBody.data = dataObj;
         toAppBody.to = androidToken;
