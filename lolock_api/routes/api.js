@@ -286,6 +286,8 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                         }, function(err) {
                             console.log(err); j++;
                         });
+
+                   console.log(j);
                 }
             }
             var sendObj = {
