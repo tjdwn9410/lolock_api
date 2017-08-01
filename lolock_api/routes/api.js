@@ -8,7 +8,8 @@ var mysqlConfig = require('../config/db_config.json');
 var FCM = require('fcm-push');
 mysql.configure(mysqlConfig);
 var moment = require('moment');
-var weatherService = require('./weatherService')
+var weatherService = require('./weatherService');
+var reqFcm = require('./reqFcm');
 
 router.use(function(res, req, next) {
     console.log(moment().format());
@@ -264,7 +265,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                             weatherService.receiveWeatherInfo(deviceRows[0].gps_lon, deviceRows[0].gps_lat, deviceRows[0].addr, moment().format(), "NULL", function(data) {
                                 pushData.pushCode = "0";
                                 pushData.message = "날씨:" + data.sky + " 온도:" + data.temperature + " / 오늘 일정 : 4개입니다.";
-                                sendPushMessage(roommateRows[j].phone_id, pushData)
+                                reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
                                     .then(function(text) {
                                         console.log(text)
                                     }, function(err) {
@@ -281,7 +282,7 @@ router.get('/checkout/:phone_id', function(req, res, next) {
                 } else {
                     pushData.pushCode = "1";
                     pushData.message = name + "님이 나갔습니다."
-                    sendPushMessage(roommateRows[j].phone_id, pushData)
+                    reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
                         .then(function(text) {
                             console.log(text)
                         }, function(err) {
@@ -339,7 +340,7 @@ router.get('/checkin/:phone_id', function(req, res, next) {
                 } else {
                     pushData.pushCode = "1";
                     pushData.message = name + "님이 들어왔습니다."
-                    sendPushMessage(roommateRows[j].phone_id, pushData)
+                    reqFcm.sendPushMessage(roommateRows[j].phone_id, pushData)
                         .then(function(text) {
                             console.log(text)
                         }, function(err) {
@@ -364,31 +365,6 @@ router.get('/checkin/:phone_id', function(req, res, next) {
         })
 })
 
-// LTID를 사용하여 동거인들을 검색하고 pushCode와 pushMessage를 동거인들에게 푸시메세지로 보냄
-var sendPushToRoommate = function(LTID, pushCode, pushMessage) {
-    mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", LTID)
-        .spread(function(rows) {
-            console.log("lolock id : " + rows[0].id);
-            return mysql.query("SELECT phone_id FROM lolock_users WHERE id IN (SELECT user_id FROM lolock_register WHERE device_id=?)", rows[0].id);
-        })
-        .spread(function(roommateRows) {
-            for (var j in roommateRows) {
-                var pushData = {}
-                pushData.pushCode = pushCode;
-                pushData.message = pushMessage;
-                sendPushMessage(roommateRows[j].phone_id, pushData)
-                    .then(function(text) {
-                        console.log(text)
-                    }, function(err) {
-                        console.log(err)
-                    });
-            }
-        })
-        .catch(function(err) {
-            console.log(err);
-            console.log("DB_ERR");
-        })
-}
 
 /* POST loRa subscribe한 데이터 전달받는다.*/
 router.post('/loradata', function(req, res, next) {
@@ -406,17 +382,17 @@ router.post('/loradata', function(req, res, next) {
     if (content[0] == "3" && content[1] == "0") // 누군가 나갈때
     {
         console.log("누군가 나갈때 시작");
-        sendPushToRoommate(LTID, "3", "");
+        reqFcm.sendPushToRoommate(LTID, "3", "");
         setTimeout(checkTrespassing, 10000, LTID);
     } else if (content[0] == "3" && content[1] == "1") // 누군가 들어올 떄
     {
         console.log("누군가 들어올 때 시작");
-        sendPushToRoommate(LTID, "4", "");
+        reqFcm.sendPushToRoommate(LTID, "4", "");
         setTimeout(checkTrespassing, 10000, LTID);
     } else if (content[0] == "3" && content[1] == "2") // 진동센서에 의해 불법침입이 감지될 때
     {
         console.log("불법침입감지 시작");
-        sendPushToRoommate(LTID, "2", "비정상적인 충격이 감지되었습니다.");
+        reqFcm.sendPushToRoommate(LTID, "2", "비정상적인 충격이 감지되었습니다.");
     }
     res.send();
 });
@@ -639,7 +615,7 @@ router.delete('/disposable-link/:linkId', function(req, res, next) {
                       var time = dateArr[0] + dateArr[1] + dateArr[2] + timeArr[0] + timeArr[1]; // 201707232325
                       sendControllMessage("26", device_id, res);
                       // TODO : open_url을 통해 누가 문을 열었다고 동거인에게 알려줌
-                      sendPushToRoommate(device_id, "1", "임시키를 통해 누군가 들어왔습니다.");
+                      reqFcm.sendPushToRoommate(device_id, "1", "임시키를 통해 누군가 들어왔습니다.");
                       mysql.query("SELECT id FROM lolock_devices WHERE device_id=?", device_id)
                         .spread(function(rows){
                           return mysql.query("INSERT INTO lolock_logs (device_id, time, out_flag) VALUES (?,?,?)", [rows[0].id, time, 1]);
@@ -665,39 +641,6 @@ router.get('/disposable-link/:linkId', function(req, res, next) {
     res.sendfile('open_url.html');
 });
 
-// TODO : data에 인덱스를 달아서 얘가 기상정보 push인지 누가 들어와서 로그를 남기는건지 알려줘야함
-var sendPushMessage = function(androidToken, dataObj) {
-    return new Promise(function(resolve, reject) {
-        // TODO
-        var headers = {
-            'Content-Type': 'application/json',
-            'Authorization': 'key=AAAA-r7E-Qs:APA91bGtjGiMIKAnGL7kF9OedU-ffFttm5rXcaizpAM-hWAUjKme-w4mP2b__NbcH6JbiKHP2A_YpiVTqiLnleCMZIYyt8i20RvxUNPv8U25yMeYrPv6YsWbyZ_OllxniyplDBJqmevO'
-        }
-        var options = {
-            url: 'https://fcm.googleapis.com/fcm/send',
-            method: 'POST',
-            headers: headers
-        }
-        var toAppBody = {}; // push 메세지 body
-
-        console.log("dataObj : " + dataObj);
-
-        toAppBody.data = dataObj;
-        toAppBody.to = androidToken;
-        options.body = JSON.stringify(toAppBody);
-        // TODO : 동기화 할 것 promise 사용
-        request(options, function(error, response, body) {
-            console.log(response.body);
-            var bodyobj = eval("(" + response.body + ")");
-            // TODO : 지금 모든 인원에게 기상 데이터를 보내고 있다. 다른 인원은 log를 보내야함
-            if (bodyobj.success === 1) {
-                resolve(androidToken + " 푸시 메세지 보내기 완료");
-            } else {
-                reject(androidToken + " 푸시 메세지 실패!!!");
-            }
-        })
-    });
-}
 
 
 //불법침임 감지
@@ -706,7 +649,7 @@ var checkTrespassing = function(arg) {
         .spread(function(rows) {
           console.log(rows);
             if (rows[0].temp_out_flag == null) {
-                sendPushToRoommate(arg, "2", "등록되지 않은 사용자가 침입했습니다.");
+                reqFcm.sendPushToRoommate(arg, "2", "등록되지 않은 사용자가 침입했습니다.");
             }
             mysql.query("UPDATE lolock_devices SET temp_out_flag = NULL WHERE device_id = ? ", [arg]);
         }).catch(function(err) {
